@@ -46,3 +46,36 @@ for i =1:n(2)
     [qvbari] = IVK(qbar(:,i),Xv(:,i));
     qvbar(:,i)=qvbari';
 end
+%% ทดสอบนอกเรื่อง
+% syms q1 q2 q3 q4 q5 wx wy wz vx vy vz h1 h2 l1 l2 l3 real
+% c =@(x) cos(x);
+% s =@(x) sin(x);
+% % link length Update
+% h1= 275.99; % lasted
+% h2= 380;
+% l1= 20.01;
+% l2= 380;
+% l3= 235;
+% DH =[0   0   h1   0;
+%     l1 pi/2  0  pi/2;
+%     h2  0    0  -pi/2;
+%     l2  0    0    0;
+%     0  pi/2  0    0];
+% q=[q1;q2;q3;q4;q5];
+% rho = [1;1;1;1;1];
+% Hne=[1 0 0 0 ;
+%      0 1 0 0; 
+%      0 0 1 l3;
+%      0 0 0 1];
+%  xi = [wx; wy; wz; vx; vy; vz];
+%%  หา Jacobian ก่อน เป็น Jacobian ที่คูณ Jrpy แล้วเนื่องจากมี input เป็น rpy ด้วย
+% H = forwardKinematics(q,rho,DH,Hne);
+% [J,Je] = manipulatorJacobian(q,rho,DH,Hne)
+% Jrpy = [0  -s(q1) c(q1)*s(q2+q3+q4);
+%         0   c(q1) s(q1)*s(q2+q3+q4);
+%         1        0     c(q2+q3+q4)];
+% Jerpy = Jrpy \ Je(1:3,:);
+% newJe = [Jerpy ; Je(4:6,:)]
+% ReducedJe = simplify(newJe(2:end,:));
+% Reducedxi = xi(2:end);
+% DetRJe = simplify(det(ReducedJe));
