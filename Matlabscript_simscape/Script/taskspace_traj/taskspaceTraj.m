@@ -22,7 +22,7 @@ gammabar = [1 1 1];
 Xfeedback = [(l2+l1) 0 (h1+h2-l3) -pi pi]
 Xgoal = [500 0   260  -pi pi]
 %% นำเข้าไปคำนวณ Traj.
-Tmax = 2
+Tmax = 5
 [Xd1,Xv1,t1f] = GenTraj(Xfeedback(1),Xgoal(1),0,Tmax);
 [Xd2,Xv2,t2f] = GenTraj(Xfeedback(2),Xgoal(2),0,Tmax);
 [Xd3,Xv3,t3f] = GenTraj(Xfeedback(3),Xgoal(3),0,Tmax);
@@ -31,6 +31,9 @@ Tmax = 2
 tall = [t1f t2f t3f t4f t5f]
 Xd = [Xd1; Xd2; Xd3; Xd4; Xd5 ]
 Xv = [Xv1; Xv2; Xv3; Xv4; Xv5 ]
+l = size(Xd1)
+time = linspace(0,Tmax,l(2))
+plot(time,Xv)
 %% ได้ Xti และ Xdti แต่ละเวลาออกมาจากนั้นแยกเข้าคำนวณ IVK และ IPK
 %IPK ถ้าviapoints ห่างเกินอาจะทำให้เกิดการ singularity / แก้ inverse ไม่ได้
 %แก้ได้โดยการทำให้ viapoint ถี่ขึ้น

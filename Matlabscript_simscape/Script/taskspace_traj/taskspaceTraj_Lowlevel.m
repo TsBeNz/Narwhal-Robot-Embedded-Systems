@@ -33,11 +33,23 @@
 % q1 q2 q3 q4 q5 ได้จาก นำ Xd1 Xd2 Xd3 Xd4 Xd5 ไปใส่ไว้ในฟังก์ชัน IPK
 %% IVK (Jacobian)
 %qv = newJe * Xv
+syms X1 X2 X3 X4 X5 real
+syms q1 q2 q3 q4 q5 real
+syms wx wy wz vx vy vz h1 h2 l1 l2 l3 real
+Xv =[X1; X2; X3; X4; X5];
 newJe = [                                                                  0,                                                                    -1,                                                -1,                           -1,                    0;
                                                                            0,                                                                     0,                                                 0,                            0,                    1;
 - sin(q1)*(l1 + l2*cos(q2 + q3) - h2*sin(q2)) - l3*sin(q2 + q3 + q4)*sin(q1), l3*cos(q2 + q3 + q4)*cos(q1) - cos(q1)*(l2*sin(q2 + q3) + h2*cos(q2)), -cos(q1)*(l2*sin(q2 + q3) - l3*cos(q2 + q3 + q4)), l3*cos(q2 + q3 + q4)*cos(q1),                    0;
   cos(q1)*(l1 + l2*cos(q2 + q3) - h2*sin(q2)) + l3*sin(q2 + q3 + q4)*cos(q1), l3*cos(q2 + q3 + q4)*sin(q1) - sin(q1)*(l2*sin(q2 + q3) + h2*cos(q2)), -sin(q1)*(l2*sin(q2 + q3) - l3*cos(q2 + q3 + q4)), l3*cos(q2 + q3 + q4)*sin(q1),                    0;
                                                                            0,                   l2*cos(q2 + q3) - h2*sin(q2) + l3*sin(q2 + q3 + q4),            l2*cos(q2 + q3) + l3*sin(q2 + q3 + q4),         l3*sin(q2 + q3 + q4),                    0];
-      
-
+qv= newJe * Xv      
+%%
+qv =
+ 
+                                                                                                                                                                                                                                      - X2 - X3 - X4
+                                                                                                                                                                                                                                                  X5
+X4*l3*cos(q2 + q3 + q4)*cos(q1) - X2*(cos(q1)*(l2*sin(q2 + q3) + h2*cos(q2)) - l3*cos(q2 + q3 + q4)*cos(q1)) - X3*cos(q1)*(l2*sin(q2 + q3) - l3*cos(q2 + q3 + q4)) - X1*(sin(q1)*(l1 + l2*cos(q2 + q3) - h2*sin(q2)) + l3*sin(q2 + q3 + q4)*sin(q1))
+X1*(cos(q1)*(l1 + l2*cos(q2 + q3) - h2*sin(q2)) + l3*sin(q2 + q3 + q4)*cos(q1)) - X2*(sin(q1)*(l2*sin(q2 + q3) + h2*cos(q2)) - l3*cos(q2 + q3 + q4)*sin(q1)) - X3*sin(q1)*(l2*sin(q2 + q3) - l3*cos(q2 + q3 + q4)) + X4*l3*cos(q2 + q3 + q4)*sin(q1)
+                                                                                                                    X2*(l2*cos(q2 + q3) - h2*sin(q2) + l3*sin(q2 + q3 + q4)) + X3*(l2*cos(q2 + q3) + l3*sin(q2 + q3 + q4)) + X4*l3*sin(q2 + q3 + q4)
+ 
 

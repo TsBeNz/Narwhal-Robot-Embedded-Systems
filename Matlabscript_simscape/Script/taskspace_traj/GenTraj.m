@@ -1,7 +1,7 @@
 function [qd,qv,T] = GenTraj(q0,qf,v0,tf) % vf ,ai , af =0 
     t0 = 0;
 %     vmax = pi/2;
-
+% 
 %     dq = qf - q0;
 %     tf = abs(dq/((vmax-v0)/1.9));
 
