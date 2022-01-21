@@ -1,0 +1,21 @@
+16:22:05 **** Incremental Build of configuration Debug for project Narwhale_Kinematics ****
+make -j12 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m7 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32H733xx -c -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c: In function 'main':
+../Core/Src/main.c:126:11: warning: unused variable 'timer1' [-Wunused-variable]
+  126 |  uint32_t timer1;
+      |           ^~~~~~
+arm-none-eabi-gcc -o "Narwhale_Kinematics.elf" @"objects.list"   -mcpu=cortex-m7 -T"C:\Users\matas\Documents\GitHub\Module89-Frab5-G3\LowLevel_Code\Narwhale_Kinematics\STM32H733VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Narwhale_Kinematics.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: Narwhale_Kinematics.elf
+ 
+arm-none-eabi-size   Narwhale_Kinematics.elf 
+arm-none-eabi-objdump -h -S  Narwhale_Kinematics.elf  > "Narwhale_Kinematics.list"
+arm-none-eabi-objcopy  -O binary  Narwhale_Kinematics.elf  "Narwhale_Kinematics.bin"
+   text	   data	    bss	    dec	    hex	filename
+  72744	    416	  10488	  83648	  146c0	Narwhale_Kinematics.elf
+Finished building: default.size.stdout
+ 
+Finished building: Narwhale_Kinematics.bin
+ 
+Finished building: Narwhale_Kinematics.list
+ 
