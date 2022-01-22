@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP BSZ42DN25NS3_G
+D Infineon BSZ42DN25NS3 G N-channel MOSFET Transistor, 5 A, 250 V, 8-Pin TSDSON
+K
+F https://www.infineon.com/dgdl/Infineon-BSZ42DN25NS3%20G-DS-v02_04-EN.pdf?fileId=db3a30432ad629a6012b15e5a93b1a8b
+$ENDCMP
+#
+#End Doc Library

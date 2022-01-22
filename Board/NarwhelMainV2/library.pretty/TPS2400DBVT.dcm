@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP TPS2400DBVT
+D 5.5V overvoltage protection controller with 100V input transient protection
+K
+F http://www.ti.com/lit/gpn/tps2400
+$ENDCMP
+#
+#End Doc Library

@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP FT232RQ-REEL
+D USB Interface IC USB to Serial UART Enhanced IC QFN-32
+K
+F https://www.mouser.in/datasheet/2/163/DS_FT232R-11534.pdf
+$ENDCMP
+#
+#End Doc Library

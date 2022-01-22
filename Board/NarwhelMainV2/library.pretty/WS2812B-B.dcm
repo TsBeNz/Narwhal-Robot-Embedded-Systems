@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP WS2812B-B
+D Light Emitting Diodes (LED) RGB 620~630nm Red, 515~530nm Green, 465~475nm Blue 550~700mcd@16mA Red, 1100~1400mcd@16mA Green, 200~400mcd@16mA Blue Top View 5050 RoHS
+K
+F http://www.world-semi.com/DownLoadFile/111
+$ENDCMP
+#
+#End Doc Library

@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP TMP75CQDRQ1
+D 1C Accuracy, Digital Temp Sensor w/ 2-Wire Interface & Alert
+K
+F http://www.ti.com/lit/gpn/tmp75c-q1
+$ENDCMP
+#
+#End Doc Library
