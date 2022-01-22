@@ -665,6 +665,9 @@
     (path "/266c3aac-3713-4127-9c3b-ea28de1f0742/951375c7-0472-4b0f-9179-849776d1d2bc"
       (reference "#PWR073") (unit 1) (value "+5V") (footprint "")
     )
+    (path "/576ac8a5-e9ca-4282-b5c2-3d8d9bc2413f/b27a7c1f-23fe-452d-a2ad-5152bb630612"
+      (reference "#PWR074") (unit 1) (value "GND") (footprint "")
+    )
     (path "/266c3aac-3713-4127-9c3b-ea28de1f0742/30a4fe3b-a469-4e0a-8181-50441a4cd1f1"
       (reference "#PWR0101") (unit 1) (value "GND") (footprint "")
     )
@@ -778,6 +781,9 @@
     )
     (path "/1a3b3d7e-4e32-4626-841a-834ccc652bec/e26c85e7-565c-4054-8402-36751542eccb"
       (reference "C37") (unit 1) (value "0.1uF") (footprint "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder")
+    )
+    (path "/576ac8a5-e9ca-4282-b5c2-3d8d9bc2413f/96e2a49a-94e5-4279-9463-d3ca1ee759d7"
+      (reference "C38") (unit 1) (value "0.1uF") (footprint "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder")
     )
     (path "/d3b997ac-0598-4cb4-b714-174c11f279a8/c94476aa-1763-4125-b490-82c59bb44645"
       (reference "D1") (unit 1) (value "WS2812B") (footprint "LED_SMD:LED_WS2812B_PLCC4_5.0x5.0mm_P3.2mm")
@@ -896,8 +902,8 @@
     (path "/d3b997ac-0598-4cb4-b714-174c11f279a8/99821845-15dc-49fb-8b9c-88c60688f11f/38cd6714-02ff-4b7e-80fc-1faca2f981ef"
       (reference "J13") (unit 1) (value "HX_3p") (footprint "Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical")
     )
-    (path "/576ac8a5-e9ca-4282-b5c2-3d8d9bc2413f/a9f9ff7b-0742-464b-9ad6-1e0cb7d881e2"
-      (reference "J14") (unit 1) (value "USB") (footprint "library:47346-0001")
+    (path "/576ac8a5-e9ca-4282-b5c2-3d8d9bc2413f/f357711d-be1c-49c1-ada8-1bfb937c6761"
+      (reference "J14") (unit 1) (value "USB_B_Micro") (footprint "Connector_USB:USB_Micro-B_Molex_47346-0001")
     )
     (path "/266c3aac-3713-4127-9c3b-ea28de1f0742/af2b4ea3-d006-44ee-97a0-cad2087ed8c5"
       (reference "J15") (unit 1) (value "Conn_01x04_Male") (footprint "Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical")
