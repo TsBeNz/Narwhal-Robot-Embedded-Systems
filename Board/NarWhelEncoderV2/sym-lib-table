@@ -1,0 +1,5 @@
+(sym_lib_table
+  (lib (name "AS5047U-HTSM")(type "Legacy")(uri "${KIPRJMOD}/library.pretty/AS5047U-HTSM.lib")(options "")(descr ""))
+  (lib (name "DS1128-09-S8B8X")(type "Legacy")(uri "${KIPRJMOD}/library.pretty/DS1128-09-S8B8X.lib")(options "")(descr ""))
+  (lib (name "SN65LVDS049PWR")(type "Legacy")(uri "${KIPRJMOD}/library.pretty/SN65LVDS049PWR.lib")(options "")(descr ""))
+)
