@@ -3747,7 +3747,7 @@
     (property "Reference" "C14" (id 0) (at 144.78 100.33 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Value" "6nF" (id 1) (at 144.78 102.87 0)
+    (property "Value" "0.1uF" (id 1) (at 144.78 102.87 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Footprint" "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder" (id 2) (at 142.24 101.6 0)
