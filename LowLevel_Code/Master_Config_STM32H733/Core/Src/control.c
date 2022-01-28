@@ -20,6 +20,7 @@ void control_init(ControlParameter *Control,float PosP,float PosI,float PosD,flo
 	Control->PositionITerm = 0;
 	Control->PositionPIDOutput = 0;
 	Control->VelocityPIDOutput = 0;
+	Control->FrequencyPIDOutput = 0;
 }
 
 void Kalman_init(KalmanParameter *kalman, float sigma_a, float sigma_w,
@@ -60,12 +61,12 @@ void CascadeControl(ControlParameter *Control,KalmanParameter *kalman,int16_t En
 			+ ((Control->PositionError[0] - Control->PositionError[1])	* Control->Pos_Kd);			/* D */
 
 	/*  Velocity  */
-
-	Control->VelocityPIDOutput = (Control->VelocitySetpoint * Control->Vel_Gfeed)  		/*FeedForward Set Point*/
-			+ (Control->Vel_Kp * (Control->VelocityError[0] - Control->VelocityError[1]))
+	Control->VelocityError[0] = Control->PositionPIDOutput+ Control->VelocitySetpoint - Control->VelocityFixWindow /*input of velocity controld*/
+	Control->VelocityPIDOutput = (Control->Vel_Kp * (Control->VelocityError[0] - Control->VelocityError[1]))
 			+ (Control->Vel_Ki * Control->VelocityError[0])
 			+ (Control->Vel_Kd	* (Control->VelocityError[0] - 2 * Control->VelocityError[1] + Control->VelocityError[2]));
-
+	/* Frequency */
+	Control->FrequencyPIDOutput = Control->Vel_Gfeed * (Control->PositionPIDOutput+ Control->VelocitySetpoint); //vel ของ feedforward เป็นที่ sum มาหมดหรือแค่ ออกจาก position
 	/* Update */
 	Control->EncoderPosition = Encoder_Position_New;
 	Control->PositionError[1] = Control->PositionError[0];

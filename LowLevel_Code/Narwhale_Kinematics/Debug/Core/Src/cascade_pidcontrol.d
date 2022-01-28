@@ -1,4 +1,5 @@
-Core/Src/pid.o: ../Core/Src/pid.c ../Core/Inc/pid.h \
+Core/Src/cascade_pidcontrol.o: ../Core/Src/cascade_pidcontrol.c \
+ ../Core/Inc/cascade_pidcontrol.h \
  ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h7xx.h \
  ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h733xx.h \
  ../Drivers/CMSIS/Include/core_cm7.h \
@@ -42,7 +43,7 @@ Core/Src/pid.o: ../Core/Src/pid.c ../Core/Inc/pid.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_ll_usb.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_pcd_ex.h
 
-../Core/Inc/pid.h:
+../Core/Inc/cascade_pidcontrol.h:
 
 ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h7xx.h:
 

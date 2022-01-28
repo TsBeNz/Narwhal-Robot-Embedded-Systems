@@ -45,6 +45,7 @@ typedef struct {
 	float EstimateVelocity[2];					/* Velocity Output form State Estimator(Kaman Filter)*/
 	float VelocityPIDOutput; 				/* PID Velocity Output */
 	float VelocityError[3];					/* Velocity Error [0] = Now Error , [1] = Before Error */
+	float FrequencyPIDOutput;               /* Frequency Output */
 } ControlParameter;
 
 typedef struct {
