@@ -19,13 +19,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "usb_device.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <math.h>
-
 #include "kinematics.h"
+#include "control.h"
+#include "AS5047U.h"
+
 //#include "arm_math.h"
 /* USER CODE END Includes */
 
@@ -40,61 +41,13 @@
 
 // Module 8-9 Variable Section
 
-#define ControlLoopTime 0.001
-#define ControlLoopTimePow2 (ControlLoopTime * ControlLoopTime)
-#define ControlLoopTimePow3 (ControlLoopTimePow2 * ControlLoopTime)
-#define ControlLoopTimePow4 (ControlLoopTimePow3 * ControlLoopTime)
+AS5047U Encoder;
 
-typedef struct {
-	uint8_t ControlEnable[2];				/* [0] = Position , [1] = Velocity */
-	float PositionSetpoint; 				/* Rad	  Input */
-	float VelocitySetpoint; 				/* Rad/s  Input (Command Velocity For Feed Forward) */
-	float PositionPIDInput;					/* PID Position Input */
-	float PositionPIDOutput; 				/* PID Position Output */
-	float VelocityPIDOutput; 				/* PID Velocity Output */
-	float PositionPConstant;				/* Position PID Constant */
-	float VelocityITerm;					/* Velocity I Term Form Velocity Control*/
-	float VelocityFixWindow;				/* Velocity Error [0] = Now Error , [1] = Before Error */
-	float VelocityPIDConstant[3];			/* Velocity PID Constant [0] = P , [1] = I , [2] = D */
-	int EncoderPosition[2];					/* Encoder Position [0] = Now Data , [1] = Before Data */
-	float EstimatePosition[2];				/* Position Output form State Estimator(Kaman Filter) [0] = Now Data , [1] = Before Data */
-	float EstimateVelocity[2];				/* Velocity Output form State Estimator(Kaman Filter) [0] = Now Data , [1] = Before Data */
-	float PositionError[2];					/* Position Error [0] = Now Error , [1] = Before Error */
-	float VelocityError[2];					/* Velocity Error [0] = Now Error , [1] = Before Error */
-	float TrajectoryCoefficient[6];			/* Trajectory Coefficient */
-	GPIO_TypeDef *DigitalIO_Port[2];		/* DigitalIO Port [0] = SPI CS [1] = DIR */
-	uint16_t DigitalIO_Pin[2];				/* DigitalIO Pin  [0] = SPI CS [1] = DIR */
-	TIM_TypeDef *TIMx_PWM;					/* PWM Timer */
-	TIM_TypeDef *TIMx_ENC;					/* Encoder Timer */
-} ControlParameter;
 
-ControlParameter Joint[5] = { 0 };
 
-// Kaman Filter Parameter
-float sigma_a[5] = { 10, 10, 10, 10, 10 }; 			// Adjustable
-float sigma_w[5] = { 0.7, 0.7, 0.7, 0.7, 0.7 }; 	// Adjustable
-float p11[5] = { 1.0, 1.0, 1.0, 1.0, 1.0 }; 		// Adjustable
-float p12[5] = { 0, 0, 0, 0, 0 };
-float p21[5] = { 0, 0, 0, 0, 0 };
-float p22[5] = { 1.0, 1.0, 1.0, 1.0, 1.0 }; 		// Adjustable
-// Trajectory Variable
-uint8_t TrajectoryMoveStatus = 0;
-uint8_t TrajectoryNewSetpoint = 0;
+// Solfware timer
+uint32_t Last_Update_Time_MS;
 
-// Flag
-uint8_t Contorl_Flag = 0;
-uint8_t Uart_Flag = 0;
-
-// System status
-
-GPIO_TypeDef *LED_Port[4] = { GPIOC, GPIOC, GPIOD, GPIOD };
-GPIO_TypeDef *SPI_SS_Port[6] = { GPIOD, GPIOD, GPIOD, GPIOD, GPIOD, GPIOD };
-uint16_t LED_Pin[4] = { GPIO_PIN_9, GPIO_PIN_8, GPIO_PIN_15, GPIO_PIN_14 };
-uint16_t SPI_SS_Pin[6] = { GPIO_PIN_5, GPIO_PIN_4, GPIO_PIN_3, GPIO_PIN_2, GPIO_PIN_1, GPIO_PIN_0 };
-
-uint32_t Last_Update_Time_MS = 0;
-
-float Temp_Calibration = 0;
 struct System_Status_Type {
 	float Temperature;
 	float Vin;
@@ -103,19 +56,6 @@ struct System_Status_Type System_Status;
 
 uint8_t UART1_rxBuffer[14] = {0};
 uint8_t UART1_txBuffer[14] = {0};
-//uint8_t UART1_rxBuffer2[14] = {0};
-uint8_t output_spi_test[4];
-int16_t output_spi_test2;
-
-int time_ipk = 0;
-
-int count_time_blink_led = 0;
-int GetData;//Encoder value
-int test_encoder_QEI[6] ={};
-uint8_t testeiei;
-
-float q_out[5];
-int task_space_test = 100;
 
 /* USER CODE END PD */
 
@@ -187,15 +127,14 @@ static void MX_TIM6_Init(void);
 static void MX_UART5_Init(void);
 /* USER CODE BEGIN PFP */
 
-void CascadeControl(void);
-void delay_us(int);
-uint16_t Encoder_Position_SPI(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
-int16_t Encoder_Speed_SPI(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
-void Encoder_Setup();
-void Encoder_command(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin,uint16_t Address, uint16_t command_input);
-void StartUp_Init_Parameter(void);
-uint8_t crc_uart(void);
-void Uart1_Sent(void);
+//void CascadeControl(void);
+//uint16_t Encoder_Position_SPI(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
+//int16_t Encoder_Speed_SPI(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
+//void Encoder_Setup();
+//void Encoder_command(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin,uint16_t Address, uint16_t command_input);
+//void StartUp_Init_Parameter(void);
+//uint8_t crc_uart(void);
+//void Uart1_Sent(void);
 
 /* USER CODE END PFP */
 
@@ -230,7 +169,7 @@ int main(void)
   PeriphCommonClock_Config();
 
   /* USER CODE BEGIN SysInit */
-  StartUp_Init_Parameter();
+
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -254,7 +193,6 @@ int main(void)
   MX_TIM2_Init();
   MX_I2C2_Init();
   MX_CRC_Init();
-  MX_USB_DEVICE_Init();
   MX_TIM24_Init();
   MX_TIM23_Init();
   MX_TIM6_Init();
@@ -273,7 +211,7 @@ int main(void)
 	HAL_Delay(10);
 //	Contorl_Flag |= 0x02; //Use QEI
 
-	Encoder_Setup(); // Change Resolution ABI to 14 bits
+//	Encoder_Setup(); // Change Resolution ABI to 14 bits
 
 	HAL_ADCEx_Calibration_Start(&hadc3, ADC_CALIB_OFFSET, ADC_SINGLE_ENDED);
 
@@ -296,6 +234,7 @@ int main(void)
 
 	HAL_TIM_Base_Start(&htim6);			// ตัวจับเวลา
 	HAL_TIM_Base_Start_IT(&htim23); 	// Interrupt Timer
+	AS5047U_init(&Encoder, &hspi3, GPIOD, &hcrc, GPIO_PIN_5);
 
   /* USER CODE END 2 */
 
@@ -306,34 +245,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-//		if (Contorl_Flag & 0x01) {
-//			Contorl_Flag &= 0xFE; // Clear Flag
-//			TIM6->CNT = 0;
-//			IPK(task_space_test,0,100,0,0,q_out);
-//			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-//			if (Contorl_Flag & 0x02) {
-//				Joint[0].EncoderPosition[0] = TIM5->CNT;
-//				Joint[1].EncoderPosition[0] = TIM4->CNT;
-//				Joint[2].EncoderPosition[0] = TIM8->CNT;
-//				Joint[3].EncoderPosition[0] = TIM1->CNT;
-//			}
-//			else {
-//				Joint[0].EncoderPosition[0] = Encoder_Position_SPI(GPIOD,GPIO_PIN_5);
-//				Joint[1].EncoderPosition[0] = Encoder_Position_SPI(GPIOD,GPIO_PIN_4);
-//				Joint[2].EncoderPosition[0] = Encoder_Position_SPI(GPIOD,GPIO_PIN_3);
-//				Joint[3].EncoderPosition[0] = Encoder_Position_SPI(GPIOD,GPIO_PIN_2);
-//			}
-//			CascadeControl();
-//			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-//
-//			time_ipk = TIM6->CNT;
-//
-//		  	task_space_test += 1;
-//		  	if(task_space_test >= 500){
-//		  		task_space_test = 100;
-//		  	}
-//		}
-//
 //		if (Uart_Flag & 0x01) {
 //			Uart_Flag &= 0xFE; // Clear Flag
 //			if (UART1_rxBuffer[0] & 0xFF && UART1_rxBuffer[1] & 0xFF) {
@@ -373,22 +284,22 @@ int main(void)
 //		output_spi_test2 = Encoder_Position_SPI(GPIOD,GPIO_PIN_5);
 //
 		int a = HAL_GetTick();
-		if (a - Last_Update_Time_MS >= 10) {
+		if (a - Last_Update_Time_MS >= 100) {
 			Last_Update_Time_MS = a;
-			// update status of MCU
-			HAL_ADC_Start_IT(&hadc3); //read temperature sensor
-			HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_8);
+			AS5047U_Position_Highspeed_Read(&Encoder);
 
-			TIM13->ARR += 30;
-			TIM13->CCR1 = TIM13->ARR/2;
-			TIM14->ARR += 30;
-			TIM14->CCR1 = TIM14->ARR/2;
-			TIM15->ARR += 30;
-			TIM15->CCR2 = TIM15->ARR/2;
-			TIM16->ARR += 30;
-			TIM16->CCR1 = TIM16->ARR/2;
-			TIM17->ARR += 30;
-			TIM17->CCR1 = TIM17->ARR/2;
+//			HAL_ADC_Start_IT(&hadc3); //read temperature sensor
+//			HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_8);
+//			TIM13->ARR += 30;
+//			TIM13->CCR1 = TIM13->ARR/2;
+//			TIM14->ARR += 30;
+//			TIM14->CCR1 = TIM14->ARR/2;
+//			TIM15->ARR += 30;
+//			TIM15->CCR2 = TIM15->ARR/2;
+//			TIM16->ARR += 30;
+//			TIM16->CCR1 = TIM16->ARR/2;
+//			TIM17->ARR += 30;
+//			TIM17->CCR1 = TIM17->ARR/2;
 
 		}
 
@@ -420,9 +331,8 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48|RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 2;
@@ -571,7 +481,7 @@ static void MX_CRC_Init(void)
   hcrc.Init.InitValue = 0xC4;
   hcrc.Init.InputDataInversionMode = CRC_INPUTDATA_INVERSION_NONE;
   hcrc.Init.OutputDataInversionMode = CRC_OUTPUTDATA_INVERSION_DISABLE;
-  hcrc.InputDataFormat = CRC_INPUTDATA_FORMAT_HALFWORDS;
+  hcrc.InputDataFormat = CRC_INPUTDATA_FORMAT_BYTES;
   if (HAL_CRC_Init(&hcrc) != HAL_OK)
   {
     Error_Handler();
@@ -1709,343 +1619,238 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(ENC6I_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : PA11 PA12 */
+  GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_12;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
 }
 
 /* USER CODE BEGIN 4 */
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-	Uart_Flag |= 0x01;
-    HAL_UART_Receive_IT(&huart1, UART1_rxBuffer, 14);
-}
-
-void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart){
-//	__HAL_UART_CLEAR_OREFLAG(huart);
-//    HAL_UART_DeInit();
-    HAL_UART_Receive_DMA(&huart1, UART1_rxBuffer, 14);
-}
-
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc){
-	uint32_t ADC_Output = HAL_ADC_GetValue(&hadc3);
-	System_Status.Temperature = Temp_Calibration * (float)((float)ADC_Output - *(unsigned short*) (0x1FF1E820)) + 30.0f;
-//	System_Status.Vin = 0.0008056640625f*ADC_Output;
-}
-
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-	if (htim == &htim23) {
-		//control loop
-		count_time_blink_led++;
-		if(count_time_blink_led>=100){
-			count_time_blink_led = 0;
-		}
-		Contorl_Flag |= 0x01;
-	}
-}
-
-void Uart1_Sent(){
-	UART1_txBuffer[13] = (uint8_t)crc_uart;
-	HAL_UART_Transmit(&huart1, UART1_txBuffer, 14, 100);
-}
-
-inline uint8_t crc_uart(){
-	return (uint8_t) HAL_CRC_Calculate(&hcrc, UART1_rxBuffer, 13) ^ 0xFF;
-}
-
-inline void delay_us (int us)
-{
-	TIM24->CNT = 0;
-	while ((TIM24->CNT) < us);
-}
-
-inline uint16_t Encoder_Position_SPI(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin){
-	uint8_t buffer[2] = { 0x3F,0xFF };
-	uint8_t Output_Data_RAW[2] = {};
-	uint16_t Output_Data = 0;
-	HAL_GPIO_WritePin(GPIOx, GPIO_Pin, 0);
-	HAL_SPI_Transmit(&hspi3, buffer, 2, 1);
-	HAL_GPIO_WritePin(GPIOx, GPIO_Pin, 1);
-	delay_us(1);
-	HAL_GPIO_WritePin(GPIOx, GPIO_Pin, 0);
-	HAL_SPI_Receive(&hspi3,Output_Data_RAW, 2, 1);
-	HAL_GPIO_WritePin(GPIOx, GPIO_Pin, 1);
-	Output_Data = (((uint16_t)Output_Data_RAW[0]&0x3F) << 8) | (uint16_t)Output_Data_RAW[1];
-	return Output_Data;
-}
-
-int16_t Encoder_Speed_SPI(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin){
-	uint8_t buffer[2] = { 0x3F,0xFC };
-	uint8_t Output_Data_RAW[2] = {};
-	int16_t Output_Data = 0;
-	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_5, 0);
-	HAL_SPI_Transmit(&hspi3, buffer, 2, 1);
-	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_5, 1);
-	delay_us(1);
-	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_5, 0);
-	HAL_SPI_Receive(&hspi3,Output_Data_RAW, 2, 1);
-	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_5, 1);
-	if((Output_Data_RAW[0] >> 5) == 0){
-		Output_Data = (((int16_t)Output_Data_RAW[0]&0x3F) << 8) | (int16_t)Output_Data_RAW[1];
-	}
-	else if ((Output_Data_RAW[0] >> 5) == 1){
-		Output_Data = (((int16_t)Output_Data_RAW[0] | 0xC0) << 8) | (int16_t)Output_Data_RAW[1];
-	}
-	return Output_Data;
-}
-
-inline void CascadeControl() {
-
-	static float TrajectoryTime = 0;
-	static float TrajectoryTimeSetpoint = 0;
-
-	// Update Encoder Position
-
-	int JointCount = 0;
-	float TrajectoryTimePow2 = TrajectoryTime * TrajectoryTime;
-	float TrajectoryTimePow3 = TrajectoryTimePow2 * TrajectoryTime;
-	float TrajectoryTimePow4 = TrajectoryTimePow3 * TrajectoryTime;
-	float TrajectoryTimePow5 = TrajectoryTimePow4 * TrajectoryTime;
-
-	// Trajectory Motion Calculation
-
-	if (TrajectoryMoveStatus) {
-		for (JointCount = 0; JointCount < 5; JointCount++) {
-		Joint[JointCount].PositionPIDInput = Joint[JointCount].TrajectoryCoefficient[0]	+ (Joint[JointCount].TrajectoryCoefficient[1] * TrajectoryTime) + (Joint[JointCount].TrajectoryCoefficient[3] * TrajectoryTimePow3) + (Joint[JointCount].TrajectoryCoefficient[4] * TrajectoryTimePow4) + (Joint[JointCount].TrajectoryCoefficient[5] * TrajectoryTimePow5);
-		Joint[JointCount].VelocitySetpoint = Joint[JointCount].TrajectoryCoefficient[1] + (3 * Joint[JointCount].TrajectoryCoefficient[3] * TrajectoryTimePow2) + (4 * Joint[JointCount].TrajectoryCoefficient[4] * TrajectoryTimePow3) + (5 * Joint[JointCount].TrajectoryCoefficient[5] * TrajectoryTimePow4);
-
-		}
-	}
-
-
-	// Only Joint 1-4 (Stepper with Encoder Feedback)
-	for (JointCount = 0; JointCount < 4 ; JointCount++)
-	{
-		//Velocity Fix Window
-		float DeltaPosition = Joint[JointCount].EncoderPosition[0] - Joint[JointCount].EncoderPosition[1];
-		DeltaPosition /= 1000;
-		Joint[JointCount].VelocityFixWindow = DeltaPosition / ControlLoopTime;
-
-		//Velocity Estimation (Input By Velocity)
-		float Q = sigma_a[JointCount] * sigma_a[JointCount];
-		float R = sigma_w[JointCount] * sigma_w[JointCount];
-		Joint[JointCount].EstimatePosition[0] = Joint[JointCount].EstimatePosition[0] + Joint[JointCount].EstimateVelocity[1] * ControlLoopTime;
-		Joint[JointCount].EstimateVelocity[0] = 0 + Joint[JointCount].EstimateVelocity[1];
-		float ye = Joint[JointCount].VelocityFixWindow - Joint[JointCount].EstimateVelocity[0];  // Input
-		p11[JointCount] = p11[JointCount] + ControlLoopTime * p21[JointCount] + (Q * ControlLoopTimePow4) / 4 + (ControlLoopTimePow2 * (p12[JointCount] + ControlLoopTime * p22[JointCount])) / ControlLoopTime;
-		p12[JointCount] = p12[JointCount] + ControlLoopTime * p22[JointCount] + (Q * ControlLoopTimePow3) / 2;
-		p21[JointCount] = (2 * ControlLoopTime * p21[JointCount] + Q * ControlLoopTimePow2 + 2 * p22[JointCount] * ControlLoopTimePow2) / (2 * ControlLoopTime);
-		p22[JointCount] = Q * ControlLoopTimePow2 + p22[JointCount];
-		Joint[JointCount].EstimatePosition[0] += (p12[JointCount] * ye) / (R + p22[JointCount]);
-		Joint[JointCount].EstimateVelocity[0] = Joint[JointCount].EstimateVelocity[0] + (p22[JointCount] * ye) / (R + p22[JointCount]);
-		p11[JointCount] = p11[JointCount] - (p12[JointCount] * p21[JointCount]) / (R + p22[JointCount]);
-		p12[JointCount] = p12[JointCount] - (p12[JointCount] * p22[JointCount]) / (R + p22[JointCount]);
-		p21[JointCount] = -p21[JointCount] * (p22[JointCount] / (R + p22[JointCount]) - 1);
-		p22[JointCount] = -p22[JointCount] * (p22[JointCount] / (R + p22[JointCount]) - 1);
-
-		// Position Controller
-		Joint[JointCount].PositionError[0] = Joint[JointCount].PositionPIDInput - Joint[JointCount].EncoderPosition[0];
-		Joint[JointCount].PositionPIDOutput = Joint[JointCount].PositionError[0] * Joint[JointCount].PositionPConstant;
-
-		// Velocity Controller
-		if (Joint[JointCount].ControlEnable[1] == 1) {
-			Joint[JointCount].VelocitySetpoint += Joint[JointCount].PositionPIDOutput;
-		}
-		Joint[JointCount].VelocityError[0] = Joint[JointCount].VelocitySetpoint - Joint[JointCount].EstimateVelocity[0];
-		Joint[JointCount].VelocityITerm += Joint[JointCount].VelocityError[0];
-		Joint[JointCount].VelocityPIDOutput = (Joint[JointCount].VelocityError[0] * Joint[JointCount].VelocityPIDConstant[0]) + (Joint[JointCount].VelocityITerm * Joint[JointCount].VelocityPIDConstant[1]) + ((Joint[JointCount].VelocityError[0] - Joint[JointCount].VelocityError[1]) * Joint[JointCount].VelocityPIDConstant[2]);
-
-		//Update Parameter
-		Joint[JointCount].EncoderPosition[1] = Joint[JointCount].EncoderPosition[0];
-		Joint[JointCount].PositionError[1] = Joint[JointCount].PositionError[0];
-		Joint[JointCount].VelocityError[1] = Joint[JointCount].VelocityError[0];
-		Joint[JointCount].EstimatePosition[1] = Joint[JointCount].EstimatePosition[0];
-		Joint[JointCount].EstimateVelocity[1] = Joint[JointCount].EstimateVelocity[0];
-
-
-		if(Joint[JointCount].VelocityPIDOutput > 10000){
-			Joint[JointCount].VelocityPIDOutput = 10000;
-		}
-		else if(Joint[JointCount].VelocityPIDOutput < -10000){
-			Joint[JointCount].VelocityPIDOutput = 10000;
-		}
-
-
-
-//		if (a>0){
-//			Joint[JointCount].VelocityPIDOutput = abs(Joint[JointCount].VelocityPIDOutput);
-////			HAL_GPIO_WritePin(GPIOx, GPIO_Pin, PinState);
-//		}
-//		else if (a == 0){
+//void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+//{
+//	Uart_Flag |= 0x01;
+//    HAL_UART_Receive_IT(&huart1, UART1_rxBuffer, 14);
+//}
 //
-//		}
-//		else{
+//void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart){
+////	__HAL_UART_CLEAR_OREFLAG(huart);
+////    HAL_UART_DeInit();
+//    HAL_UART_Receive_DMA(&huart1, UART1_rxBuffer, 14);
+//}
 //
-//		}
-
-
-
-
-//		if(){
+//void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc){
+//	uint32_t ADC_Output = HAL_ADC_GetValue(&hadc3);
+//	System_Status.Temperature = Temp_Calibration * (float)((float)ADC_Output - *(unsigned short*) (0x1FF1E820)) + 30.0f;
+////	System_Status.Vin = 0.0008056640625f*ADC_Output;
+//}
 //
+//void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+//	if (htim == &htim23) {
+//		//control loop
+//		count_time_blink_led++;
+//		if(count_time_blink_led>=100){
+//			count_time_blink_led = 0;
 //		}
-
-	}
-
-	// Update Trajectory Path & Parameter
-	if (TrajectoryNewSetpoint) {
-
-		// time set point calculation
-		TrajectoryTimeSetpoint = 10;
-		// time set point?
-
-		float TrajectoryTimeSetpointPow2 = TrajectoryTimeSetpoint * TrajectoryTimeSetpoint;
-		float TrajectoryTimeSetpointPow3 = TrajectoryTimeSetpointPow2 * TrajectoryTimeSetpoint;
-		float TrajectoryTimeSetpointPow4 = TrajectoryTimeSetpointPow3 * TrajectoryTimeSetpoint;
-		float TrajectoryTimeSetpointPow5 = TrajectoryTimeSetpointPow4 * TrajectoryTimeSetpoint;
-		for (JointCount = 0; JointCount < 5; JointCount++) {
-			float ds = Joint[JointCount].EncoderPosition[0] - Joint[JointCount].PositionSetpoint;
-			float tfv0 = TrajectoryTimeSetpoint * Joint[JointCount].EstimateVelocity[0];
-
-			Joint[JointCount].TrajectoryCoefficient[0] = Joint[JointCount].EncoderPosition[0];
-			Joint[JointCount].TrajectoryCoefficient[1] = Joint[JointCount].EstimateVelocity[0];
-			Joint[JointCount].TrajectoryCoefficient[3] = -(2*(5*ds + 3*tfv0))/TrajectoryTimeSetpointPow3;
-			Joint[JointCount].TrajectoryCoefficient[4] = (15 * ds + 8 * tfv0)/TrajectoryTimeSetpointPow4;
-			Joint[JointCount].TrajectoryCoefficient[5] = -(3*(2* ds + tfv0))/TrajectoryTimeSetpointPow5;
-
-		}
-		TrajectoryMoveStatus = 1;
-		TrajectoryNewSetpoint = 0;
-		TrajectoryTime = 0;
-	}
-	else {
-		if (TrajectoryMoveStatus) {
-			TrajectoryTime += ControlLoopTime;
-			if (TrajectoryTime > TrajectoryTimeSetpoint) {
-				TrajectoryTime = 0;
-				TrajectoryMoveStatus = 0;
-			}
-		}
-	}
-}
-
-void Encoder_Setup(){
-	/* SETTINGS3 (0x001A) --> ABIRES R/W/P 7:5 Resolution of ABI 0x0080 for 14bits Resolution */
-
-	Encoder_command(GPIOD, GPIO_PIN_5 ,0x001A ,0x0080);
-	Encoder_command(GPIOD, GPIO_PIN_4 ,0x001A ,0x0080);
-	Encoder_command(GPIOD, GPIO_PIN_3 ,0x001A ,0x0080);
-	Encoder_command(GPIOD, GPIO_PIN_2 ,0x001A ,0x0080);
-	Encoder_command(GPIOD, GPIO_PIN_1 ,0x001A ,0x0080);
-//	delay_us(100);
-
-//	uint16_t  Avg_Position = 0;
-//	for (int i = 0; i < 4; i++) {
-//		for (int j = 0; j < 10; j++) {
-//			Avg_Position += Encoder_Position_SPI(GPIOD,
-//					Joint[i].DigitalIO_Pin[0]);
-//			delay_us(10);
-//		}
-//		Avg_Position /= 10;
-//		Joint[i].EncoderPosition[0] = Avg_Position;
-//		Joint[i].EncoderPosition[1] = Avg_Position;
-//		Avg_Position = 0;
+//		Contorl_Flag |= 0x01;
 //	}
+//}
 
-//	Encoder_command(GPIOD, GPIO_PIN_0 ,0x001A ,0x0080);  //Base Encoder
-}
-
-void Encoder_command(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin,uint16_t Address_input, uint16_t command_input) {
-	uint8_t Encoder_command_buffer[3] = { 0 };
-	uint32_t Address[1] = {0};
-	uint32_t data_input[1] = {0};
-	Address[0] = (uint32_t)Address_input;
-	data_input[0] = (uint32_t)command_input;
-
-	delay_us(2);
-	uint8_t crc_out = (uint8_t) HAL_CRC_Calculate(&hcrc, Address, 1) ^ 0xFF;
-	Encoder_command_buffer[0] = (uint8_t) (Address[0] >> 8);
-	Encoder_command_buffer[1] = (uint8_t) Address[0] & 0xFF;
-	Encoder_command_buffer[2] = crc_out;
-	HAL_GPIO_WritePin(GPIOx, GPIO_Pin, 0);
-	HAL_SPI_Transmit(&hspi3, Encoder_command_buffer, 3, 1);
-	HAL_GPIO_WritePin(GPIOx, GPIO_Pin, 1);
-
-	delay_us(2);
-	crc_out = (uint8_t) HAL_CRC_Calculate(&hcrc, data_input, 1) ^ 0xFF;
-	Encoder_command_buffer[0] = (uint8_t) (data_input[0] >> 8);
-	Encoder_command_buffer[1] = (uint8_t) data_input[0] & 0xFF;
-	Encoder_command_buffer[2] = crc_out;
-	HAL_GPIO_WritePin(GPIOx, GPIO_Pin, 0);
-	HAL_SPI_TransmitReceive(&hspi3, Encoder_command_buffer, output_spi_test, 3, 1);
-	HAL_GPIO_WritePin(GPIOx, GPIO_Pin, 1);
-}
-
-void StartUp_Init_Parameter(void){
-	// Control Parameter
-	Joint[0].PositionPConstant = 1;
-	Joint[0].VelocityPIDConstant[0] = 1;
-	Joint[0].VelocityPIDConstant[1] = 0;
-	Joint[0].VelocityPIDConstant[2] = 0;
-	Joint[0].DigitalIO_Port[0] = GPIOD;		// SPI CS
-	Joint[0].DigitalIO_Port[1] = GPIOE;		// DIR
-	Joint[0].DigitalIO_Pin[0] = GPIO_PIN_5;
-	Joint[0].DigitalIO_Pin[1] = GPIO_PIN_0;
-	Joint[0].TIMx_PWM = TIM13;
-	Joint[0].TIMx_ENC = TIM5;
-
-	Joint[1].PositionPConstant = 1;
-	Joint[1].VelocityPIDConstant[0] = 1;
-	Joint[1].VelocityPIDConstant[1] = 0;
-	Joint[1].VelocityPIDConstant[2] = 0;
-	Joint[1].DigitalIO_Port[0] = GPIOD;		// SPI CS
-	Joint[1].DigitalIO_Port[1] = GPIOE;		// DIR
-	Joint[1].DigitalIO_Pin[0] = GPIO_PIN_4;
-	Joint[1].DigitalIO_Pin[1] = GPIO_PIN_1;
-	Joint[1].TIMx_PWM = TIM14;
-	Joint[0].TIMx_ENC = TIM4;
-
-	Joint[2].PositionPConstant = 1;
-	Joint[2].VelocityPIDConstant[0] = 1;
-	Joint[2].VelocityPIDConstant[1] = 0;
-	Joint[2].VelocityPIDConstant[2] = 0;
-	Joint[2].DigitalIO_Port[0] = GPIOD;		// SPI CS
-	Joint[2].DigitalIO_Port[1] = GPIOE;		// DIR
-	Joint[2].DigitalIO_Pin[0] = GPIO_PIN_3;
-	Joint[2].DigitalIO_Pin[1] = GPIO_PIN_3;
-	Joint[2].TIMx_PWM = TIM16;
-	Joint[0].TIMx_ENC = TIM8;
-
-	Joint[3].PositionPConstant = 1;
-	Joint[3].VelocityPIDConstant[0] = 1;
-	Joint[3].VelocityPIDConstant[1] = 0;
-	Joint[3].VelocityPIDConstant[2] = 0;
-	Joint[3].DigitalIO_Port[0] = GPIOD;		// SPI CS
-	Joint[3].DigitalIO_Port[1] = GPIOE;		// DIR
-	Joint[3].DigitalIO_Pin[0] = GPIO_PIN_2;
-	Joint[3].DigitalIO_Pin[1] = GPIO_PIN_4;
-	Joint[3].TIMx_PWM = TIM17;
-	Joint[0].TIMx_ENC = TIM1;
-
-	Joint[4].PositionPConstant = 1;
-	Joint[4].VelocityPIDConstant[0] = 1;
-	Joint[4].VelocityPIDConstant[1] = 0;
-	Joint[4].VelocityPIDConstant[2] = 0;
-	Joint[4].DigitalIO_Port[0] = GPIOD;		// SPI CS
-	Joint[4].DigitalIO_Port[1] = GPIOE;		// DIR
-	Joint[4].DigitalIO_Pin[0] = GPIO_PIN_1;
-	Joint[4].DigitalIO_Pin[1] = GPIO_PIN_2;
-	Joint[4].TIMx_PWM = TIM13;
-	Joint[0].TIMx_ENC = TIM3;
-
-	for (int k = 0; k < 5; k++) {
-		Joint[k].ControlEnable[0] = 1;
-		Joint[k].ControlEnable[1] = 1;
-	}
-
-	Temp_Calibration =
-			(110.0 - 30.0)
-					/ (*(unsigned short*) (0x1FF1E840)
-							- *(unsigned short*) (0x1FF1E820));
-}
+//void Uart1_Sent(){
+//	UART1_txBuffer[13] = crc_uart();
+//	HAL_UART_Transmit(&huart1, UART1_txBuffer, 14, 100);
+//}
+//
+//inline uint8_t crc_uart(){
+//	return (uint8_t) HAL_CRC_Calculate(&hcrc, (uint32_t*)UART1_rxBuffer, 13) ^ 0xFF;
+//}
+//
+//inline void CascadeControl() {
+//
+//	static float TrajectoryTime = 0;
+//	static float TrajectoryTimeSetpoint = 0;
+//
+//	// Update Encoder Position
+//
+//	int JointCount = 0;
+//	float TrajectoryTimePow2 = TrajectoryTime * TrajectoryTime;
+//	float TrajectoryTimePow3 = TrajectoryTimePow2 * TrajectoryTime;
+//	float TrajectoryTimePow4 = TrajectoryTimePow3 * TrajectoryTime;
+//	float TrajectoryTimePow5 = TrajectoryTimePow4 * TrajectoryTime;
+//
+//	// Trajectory Motion Calculation
+//
+//	if (TrajectoryMoveStatus) {
+//		for (JointCount = 0; JointCount < 5; JointCount++) {
+//		Joint[JointCount].PositionPIDInput = Joint[JointCount].TrajectoryCoefficient[0]	+ (Joint[JointCount].TrajectoryCoefficient[1] * TrajectoryTime) + (Joint[JointCount].TrajectoryCoefficient[3] * TrajectoryTimePow3) + (Joint[JointCount].TrajectoryCoefficient[4] * TrajectoryTimePow4) + (Joint[JointCount].TrajectoryCoefficient[5] * TrajectoryTimePow5);
+//		Joint[JointCount].VelocitySetpoint = Joint[JointCount].TrajectoryCoefficient[1] + (3 * Joint[JointCount].TrajectoryCoefficient[3] * TrajectoryTimePow2) + (4 * Joint[JointCount].TrajectoryCoefficient[4] * TrajectoryTimePow3) + (5 * Joint[JointCount].TrajectoryCoefficient[5] * TrajectoryTimePow4);
+//		}
+//	}
+//
+//
+//	// Only Joint 1-4 (Stepper with Encoder Feedback)
+//	for (JointCount = 0; JointCount < 4 ; JointCount++)
+//	{
+//		//Velocity Fix Window
+//		float DeltaPosition = Joint[JointCount].EncoderPosition[0] - Joint[JointCount].EncoderPosition[1];
+//		DeltaPosition /= 1000;
+//		Joint[JointCount].VelocityFixWindow = DeltaPosition / ControlLoopTime;
+//
+//		//Velocity Estimation (Input By Velocity)
+//		float Q = sigma_a[JointCount] * sigma_a[JointCount];
+//		float R = sigma_w[JointCount] * sigma_w[JointCount];
+//		Joint[JointCount].EstimatePosition[0] = Joint[JointCount].EstimatePosition[0] + Joint[JointCount].EstimateVelocity[1] * ControlLoopTime;
+//		Joint[JointCount].EstimateVelocity[0] = 0 + Joint[JointCount].EstimateVelocity[1];
+//		float ye = Joint[JointCount].VelocityFixWindow - Joint[JointCount].EstimateVelocity[0];  // Input
+//		p11[JointCount] = p11[JointCount] + ControlLoopTime * p21[JointCount] + (Q * ControlLoopTimePow4) / 4 + (ControlLoopTimePow2 * (p12[JointCount] + ControlLoopTime * p22[JointCount])) / ControlLoopTime;
+//		p12[JointCount] = p12[JointCount] + ControlLoopTime * p22[JointCount] + (Q * ControlLoopTimePow3) / 2;
+//		p21[JointCount] = (2 * ControlLoopTime * p21[JointCount] + Q * ControlLoopTimePow2 + 2 * p22[JointCount] * ControlLoopTimePow2) / (2 * ControlLoopTime);
+//		p22[JointCount] = Q * ControlLoopTimePow2 + p22[JointCount];
+//		Joint[JointCount].EstimatePosition[0] += (p12[JointCount] * ye) / (R + p22[JointCount]);
+//		Joint[JointCount].EstimateVelocity[0] = Joint[JointCount].EstimateVelocity[0] + (p22[JointCount] * ye) / (R + p22[JointCount]);
+//		p11[JointCount] = p11[JointCount] - (p12[JointCount] * p21[JointCount]) / (R + p22[JointCount]);
+//		p12[JointCount] = p12[JointCount] - (p12[JointCount] * p22[JointCount]) / (R + p22[JointCount]);
+//		p21[JointCount] = -p21[JointCount] * (p22[JointCount] / (R + p22[JointCount]) - 1);
+//		p22[JointCount] = -p22[JointCount] * (p22[JointCount] / (R + p22[JointCount]) - 1);
+//
+//		// Position Controller
+//		Joint[JointCount].PositionError[0] = Joint[JointCount].PositionPIDInput - Joint[JointCount].EncoderPosition[0];
+//		Joint[JointCount].PositionPIDOutput = Joint[JointCount].PositionError[0] * Joint[JointCount].PositionPConstant;
+//
+//		// Velocity Controller
+//		if (Joint[JointCount].ControlEnable[1] == 1) {
+//			Joint[JointCount].VelocitySetpoint += Joint[JointCount].PositionPIDOutput;
+//		}
+//		Joint[JointCount].VelocityError[0] = Joint[JointCount].VelocitySetpoint - Joint[JointCount].EstimateVelocity[0];
+//		Joint[JointCount].VelocityITerm += Joint[JointCount].VelocityError[0];
+//		Joint[JointCount].VelocityPIDOutput = (Joint[JointCount].VelocityError[0] * Joint[JointCount].VelocityPIDConstant[0]) + (Joint[JointCount].VelocityITerm * Joint[JointCount].VelocityPIDConstant[1]) + ((Joint[JointCount].VelocityError[0] - Joint[JointCount].VelocityError[1]) * Joint[JointCount].VelocityPIDConstant[2]);
+//
+//		//Update Parameter
+//		Joint[JointCount].EncoderPosition[1] = Joint[JointCount].EncoderPosition[0];
+//		Joint[JointCount].PositionError[1] = Joint[JointCount].PositionError[0];
+//		Joint[JointCount].VelocityError[1] = Joint[JointCount].VelocityError[0];
+//		Joint[JointCount].EstimatePosition[1] = Joint[JointCount].EstimatePosition[0];
+//		Joint[JointCount].EstimateVelocity[1] = Joint[JointCount].EstimateVelocity[0];
+//
+//
+//		if(Joint[JointCount].VelocityPIDOutput > 10000){
+//			Joint[JointCount].VelocityPIDOutput = 10000;
+//		}
+//		else if(Joint[JointCount].VelocityPIDOutput < -10000){
+//			Joint[JointCount].VelocityPIDOutput = 10000;
+//		}
+//
+//	}
+//
+//	// Update Trajectory Path & Parameter
+//	if (TrajectoryNewSetpoint) {
+//
+//		// time set point calculation
+//		TrajectoryTimeSetpoint = 10;
+//		// time set point?
+//
+//		float TrajectoryTimeSetpointPow2 = TrajectoryTimeSetpoint * TrajectoryTimeSetpoint;
+//		float TrajectoryTimeSetpointPow3 = TrajectoryTimeSetpointPow2 * TrajectoryTimeSetpoint;
+//		float TrajectoryTimeSetpointPow4 = TrajectoryTimeSetpointPow3 * TrajectoryTimeSetpoint;
+//		float TrajectoryTimeSetpointPow5 = TrajectoryTimeSetpointPow4 * TrajectoryTimeSetpoint;
+//		for (JointCount = 0; JointCount < 5; JointCount++) {
+//			float ds = Joint[JointCount].EncoderPosition[0] - Joint[JointCount].PositionSetpoint;
+//			float tfv0 = TrajectoryTimeSetpoint * Joint[JointCount].EstimateVelocity[0];
+//
+//			Joint[JointCount].TrajectoryCoefficient[0] = Joint[JointCount].EncoderPosition[0];
+//			Joint[JointCount].TrajectoryCoefficient[1] = Joint[JointCount].EstimateVelocity[0];
+//			Joint[JointCount].TrajectoryCoefficient[3] = -(2*(5*ds + 3*tfv0))/TrajectoryTimeSetpointPow3;
+//			Joint[JointCount].TrajectoryCoefficient[4] = (15 * ds + 8 * tfv0)/TrajectoryTimeSetpointPow4;
+//			Joint[JointCount].TrajectoryCoefficient[5] = -(3*(2* ds + tfv0))/TrajectoryTimeSetpointPow5;
+//
+//		}
+//		TrajectoryMoveStatus = 1;
+//		TrajectoryNewSetpoint = 0;
+//		TrajectoryTime = 0;
+//	}
+//	else {
+//		if (TrajectoryMoveStatus) {
+//			TrajectoryTime += ControlLoopTime;
+//			if (TrajectoryTime > TrajectoryTimeSetpoint) {
+//				TrajectoryTime = 0;
+//				TrajectoryMoveStatus = 0;
+//			}
+//		}
+//	}
+//}
+//
+//
+//
+//void StartUp_Init_Parameter(void){
+//	// Control Parameter
+//	Joint[0].PositionPConstant = 1;
+//	Joint[0].VelocityPIDConstant[0] = 1;
+//	Joint[0].VelocityPIDConstant[1] = 0;
+//	Joint[0].VelocityPIDConstant[2] = 0;
+//	Joint[0].DigitalIO_Port[0] = GPIOD;		// SPI CS
+//	Joint[0].DigitalIO_Port[1] = GPIOE;		// DIR
+//	Joint[0].DigitalIO_Pin[0] = GPIO_PIN_5;
+//	Joint[0].DigitalIO_Pin[1] = GPIO_PIN_0;
+//	Joint[0].TIMx_PWM = TIM13;
+//	Joint[0].TIMx_ENC = TIM5;
+//
+//	Joint[1].PositionPConstant = 1;
+//	Joint[1].VelocityPIDConstant[0] = 1;
+//	Joint[1].VelocityPIDConstant[1] = 0;
+//	Joint[1].VelocityPIDConstant[2] = 0;
+//	Joint[1].DigitalIO_Port[0] = GPIOD;		// SPI CS
+//	Joint[1].DigitalIO_Port[1] = GPIOE;		// DIR
+//	Joint[1].DigitalIO_Pin[0] = GPIO_PIN_4;
+//	Joint[1].DigitalIO_Pin[1] = GPIO_PIN_1;
+//	Joint[1].TIMx_PWM = TIM14;
+//	Joint[0].TIMx_ENC = TIM4;
+//
+//	Joint[2].PositionPConstant = 1;
+//	Joint[2].VelocityPIDConstant[0] = 1;
+//	Joint[2].VelocityPIDConstant[1] = 0;
+//	Joint[2].VelocityPIDConstant[2] = 0;
+//	Joint[2].DigitalIO_Port[0] = GPIOD;		// SPI CS
+//	Joint[2].DigitalIO_Port[1] = GPIOE;		// DIR
+//	Joint[2].DigitalIO_Pin[0] = GPIO_PIN_3;
+//	Joint[2].DigitalIO_Pin[1] = GPIO_PIN_3;
+//	Joint[2].TIMx_PWM = TIM16;
+//	Joint[0].TIMx_ENC = TIM8;
+//
+//	Joint[3].PositionPConstant = 1;
+//	Joint[3].VelocityPIDConstant[0] = 1;
+//	Joint[3].VelocityPIDConstant[1] = 0;
+//	Joint[3].VelocityPIDConstant[2] = 0;
+//	Joint[3].DigitalIO_Port[0] = GPIOD;		// SPI CS
+//	Joint[3].DigitalIO_Port[1] = GPIOE;		// DIR
+//	Joint[3].DigitalIO_Pin[0] = GPIO_PIN_2;
+//	Joint[3].DigitalIO_Pin[1] = GPIO_PIN_4;
+//	Joint[3].TIMx_PWM = TIM17;
+//	Joint[0].TIMx_ENC = TIM1;
+//
+//	Joint[4].PositionPConstant = 1;
+//	Joint[4].VelocityPIDConstant[0] = 1;
+//	Joint[4].VelocityPIDConstant[1] = 0;
+//	Joint[4].VelocityPIDConstant[2] = 0;
+//	Joint[4].DigitalIO_Port[0] = GPIOD;		// SPI CS
+//	Joint[4].DigitalIO_Port[1] = GPIOE;		// DIR
+//	Joint[4].DigitalIO_Pin[0] = GPIO_PIN_1;
+//	Joint[4].DigitalIO_Pin[1] = GPIO_PIN_2;
+//	Joint[4].TIMx_PWM = TIM13;
+//	Joint[0].TIMx_ENC = TIM3;
+//
+//	for (int k = 0; k < 5; k++) {
+//		Joint[k].ControlEnable[0] = 1;
+//		Joint[k].ControlEnable[1] = 1;
+//	}
+//
+//	Temp_Calibration =
+//			(110.0 - 30.0)
+//					/ (*(unsigned short*) (0x1FF1E840)
+//							- *(unsigned short*) (0x1FF1E820));
+//}
 
 
 /* USER CODE END 4 */
