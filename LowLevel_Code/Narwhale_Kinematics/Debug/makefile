@@ -64,8 +64,8 @@ all: main-build
 main-build: Narwhale_Kinematics.elf secondary-outputs
 
 # Tool invocations
-Narwhale_Kinematics.elf: $(OBJS) $(USER_OBJS) C:\Users\matas\Documents\GitHub\Module89-Frab5-G3\LowLevel_Code\Narwhale_Kinematics\STM32H733VGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Narwhale_Kinematics.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"C:\Users\matas\Documents\GitHub\Module89-Frab5-G3\LowLevel_Code\Narwhale_Kinematics\STM32H733VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Narwhale_Kinematics.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Narwhale_Kinematics.elf: $(OBJS) $(USER_OBJS) C:\github\Module89-Frab5-G3\LowLevel_Code\Narwhale_Kinematics\STM32H733VGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Narwhale_Kinematics.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"C:\github\Module89-Frab5-G3\LowLevel_Code\Narwhale_Kinematics\STM32H733VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Narwhale_Kinematics.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

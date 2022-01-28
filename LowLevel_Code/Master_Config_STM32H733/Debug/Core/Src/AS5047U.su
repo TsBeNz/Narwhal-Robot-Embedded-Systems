@@ -1,0 +1,6 @@
+AS5047U.c:10:6:AS5047U_init	24	static
+AS5047U.c:57:13:AS5047U_Write	24	static
+AS5047U.c:75:26:AS5047U_Read	32	static
+AS5047U.c:103:17:AS5047U_Position_Highspeed_Read	24	static
+AS5047U.c:119:16:AS5047U_Speed_Highspeed_Read	32	static
+AS5047U.c:140:6:AS5047U_Read_Error	32	static
