@@ -33,15 +33,19 @@ for i=1:5
         Tmax = tf;
     end
 end
-%%  ตัวอย่างการทำ Traj. quintic
-q = [1 2 3 4];
-qd_all=[];
-qv_all=[];
-qa_all=[];
+%%  ตัวอย่างการทำ Traj. quintic ใน Taskspace
+X1 = [100 200 300 400];
+X2 = [];
+X3 = [];
+X4 = [];
+X5 = [];
+Xd_all=[];
+Xv_all=[];
+Xa_all=[];
 itime = [2 2 3];
-for  i = 1:numel(q)-1
-    q0 = q(i);
-    qf = q(i+1);
+for  i = 1:numel(X1)-1
+    X0 = X1(i);
+    Xf = X1(i+1);
     v0 = 0;
     t0 = 0;
     tf = itime(i);
@@ -53,10 +57,10 @@ for  i = 1:numel(q)-1
     t = linspace(t0,tf,1000*(tf - t0)); % Hz : 1000
     T = tf;
     
-    ds = q0 - qf;
+    ds = X0 - Xf;
     tfv0 = tf*v0;
     
-    co0 = q0
+    co0 = X0
     co1 = v0
     co2 = 0
     co3 =  - (2*(5*ds + 3*tfv0))/tf^3
@@ -65,44 +69,46 @@ for  i = 1:numel(q)-1
     
     % qd = co0 + (co1.*t) + (co2.*t.^2) + (co3.*t.^3) + (co4.*t.^4) + (co5.*t.^5)
     % qv = co1 + (2*co2.*t)+ (3*co3.*t.^2) + (4*co4.*t.^3) + (5*co5.*t.^4)
-    qd = co0 + (co1.*t) + (co3.*t.^3) + (co4.*t.^4) + (co5.*t.^5)
-    qv = co1 + (3*co3.*t.^2) + (4*co4.*t.^3) + (5*co5.*t.^4);
-    qa = (6*co3.*t) + (12*co4.*t.^2) + (20*co5.*t.^3);
-    qd_all{i} = qd
-    qv_all{i} = qv
-    qa_all{i} = qa
+    Xd = co0 + (co1.*t) + (co3.*t.^3) + (co4.*t.^4) + (co5.*t.^5)
+    Xv = co1 + (3*co3.*t.^2) + (4*co4.*t.^3) + (5*co5.*t.^4);
+    Xa = (6*co3.*t) + (12*co4.*t.^2) + (20*co5.*t.^3);
+    Xd_all{i} = Xd
+    Xv_all{i} = Xv
+    Xa_all{i} = Xa
     
     
 end
 % hold on
-for j = 1:numel(q)-1
-    sumt =0
+sumt =0
+for j = 1:numel(itime)
     if j == 1
-     t_all = linspace(t(j), t(j+1), numel(qd_all{j}));
+     t_all = linspace(0, itime(j), numel(Xd_all{j}));
      hold on
      subplot(3,1,1)
-     plot(t_all,qd_all{j})
+     plot(t_all,Xd_all{j})
      hold on
      subplot(3,1,2)
-     plot(t_all,qv_all{j})
+     plot(t_all,Xv_all{j})
      hold on
      subplot(3,1,3)
-     plot(t_all,qa_all{j})
-     sumt = sumt + t(j)
+     plot(t_all,Xa_all{j})
+     sumt = sumt + itime(j)
     else
-     t_all = linspace(t(j)+sumt, t(j+1), numel(qd_all{j}));
+     t_all = linspace(sumt, itime(j)+sumt, numel(Xd_all{j}));
      hold on
      subplot(3,1,1)
-     plot(t_all,qd_all{j})
+     plot(t_all,Xd_all{j})
      hold on
      subplot(3,1,2)
-     plot(t_all,qv_all{j})
+     plot(t_all,Xv_all{j})
       hold on
      subplot(3,1,3)
-     plot(t_all,qa_all{j})
-     sumt = sumt + t(j)
+     plot(t_all,Xa_all{j})
+     sumt = sumt + itime(j)
     end
 end
+%% Inverse Kinematics
+%%
 %     subplot(3,1,1)
 %     plot(t_all,qd);
 %     subplot(3,1,2)
@@ -123,3 +129,13 @@ end
 % q3sim = timeseries(q3VSt,linspace(0,Tmax,numel(q3VSt)));
 % q4sim = timeseries(q4VSt,linspace(0,Tmax,numel(q4VSt)));
 % q5sim = timeseries(q5VSt,linspace(0,Tmax,numel(q5VSt)));
+%% find optimal tf hardcode
+% เช็คใน qv แต่ละ joint
+% v_max = 50
+% for i = 1: numel(q)-1
+%     max_qv(i) = max(qv_all{i})
+% end
+% if max_qv >= v_max 
+%     tf =
+% else
+% end

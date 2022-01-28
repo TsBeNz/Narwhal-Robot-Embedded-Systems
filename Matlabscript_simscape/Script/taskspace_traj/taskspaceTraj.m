@@ -19,8 +19,9 @@ DH =[0   0   h1   0;
     0  pi/2  0    0];
 gammabar = [1 1 1];
 %%  กำหนด Input
-Xfeedback = [(l2+l1) 0 (h1+h2-l3) -pi pi]
+Xfeedback = [(l2+l1) 0 (h1+h2-l3) -pi    pi]
 Xgoal = [500 0   260  -pi pi]
+itime = [2]
 %% นำเข้าไปคำนวณ Traj.
 Tmax = 5
 [Xd1,Xv1,t1f] = GenTraj(Xfeedback(1),Xgoal(1),0,Tmax);

@@ -1,0 +1,16 @@
+/*
+ * pid.h
+ *
+ *  Created on: Jan 27, 2022
+ *      Author: matas
+ */
+
+#ifndef INC_PID_H_
+#define INC_PID_H_
+
+// include stm32h7 driver
+#include "stm32h7xx.h"
+
+void PID_Vform(float c, float k_p, float k_i, float k_d, float setpoint, float feedback, float *prev_error, float *pprev_error, );
+
+#endif /* INC_PID_H_ */

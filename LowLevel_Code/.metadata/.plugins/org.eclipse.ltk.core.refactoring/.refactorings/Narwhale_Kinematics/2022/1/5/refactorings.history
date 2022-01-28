@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">&#x0A;<refactoring comment="Rename resource &apos;Narwhale_Kinematics/Core/Inc/pid.h&apos; to &apos;cascade_pidcontrol.h&apos;" description="Rename resource &apos;pid.h&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="Core/Inc/pid.h" name="cascade_pidcontrol.h" stamp="1643291641254" updateReferences="true"/>&#x0A;<refactoring comment="Rename resource &apos;Narwhale_Kinematics/Core/Src/pid.c&apos; to &apos;cascade_pidcontrol.c&apos;" description="Rename resource &apos;pid.c&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="Core/Src/pid.c" name="cascade_pidcontrol.c" stamp="1643291652198" updateReferences="true"/>
+</session>

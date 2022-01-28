@@ -14,15 +14,15 @@
 /*
  * DEFINES
  */
-#define h1 275.99
-#define h2 380
-#define l1 20.01
-#define l2 380
-#define l3 235
+//#define h1 275.99
+//#define h2 380
+//#define l1 20.01
+//#define l2 380
+//#define l3 235
 
 /*
  * Function
  */
 void IVK(float v_x, float v_y, float v_z, float v_pitch, float v_yaw, float *q, float *qv);
-
+void PID_Vform(float c, float k_p, float k_i, float k_d, float setpoint, float feedback, float *prev_error, float *pprev_error, );
 #endif /* INC_KINEMATICS_H_ */
