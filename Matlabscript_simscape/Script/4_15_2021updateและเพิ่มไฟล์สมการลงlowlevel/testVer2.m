@@ -13,7 +13,8 @@ l1= 20.01;
 l2= 380;
 l3= 235;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-TaskVar = [ (l2+l1) 0 (h1+h2-l3) -pi pi]% position(x,y,z) and pitch ,yaw
+% TaskVar = [ (l2+l1) 0 (h1+h2-l3) -pi pi]% position(x,y,z) and pitch ,yaw
+TaskVar = [ 500 0 420 -pi pi]
 %(65.4+416) 0 ((180+310-150)) 0 0               (20+380) 0 ((251+380-285))
 P = TaskVar(1:3)'
 rbar = [0 TaskVar(4:5)] 
@@ -25,4 +26,4 @@ DH =[0   0   h1   0;
     0  pi/2  0    0];
 gammabar = [1 1 1];
 [qbar,shout] = IKnawhale2(P,rbar,gammabar,h1,h2,l1,l2,l3,DH)
-[H1,H2,H3,H4,H5,He] = FKnawhale(qbar,l3,DH);
+[H1,H2,H3,H4,H5,He] = FKnawhale(qbar,l3,DH)

@@ -11,7 +11,7 @@ h1= 275.99/1000; % lasted
 h2= 380/1000;
 l1= 20.01/1000;
 l2= 380/1000;
-l3= 235/1000;
+l3= 268.23/1000;
 DH =[0   0   h1   0;
     l1 pi/2  0  pi/2;
     h2  0    0  -pi/2;
@@ -20,12 +20,11 @@ DH =[0   0   h1   0;
 gammabar = [1 1 1];
 %%  กำหนด Input
 Xviapoint = [(l2+l1)         0      (h1+h2-l3)   -pi    pi;
-              300/1000  100/1000     350/1000    -pi/2  pi;
-              200/1000  200/1000     300/1000     0     pi/2 ]; %3 via points
-viapoint [100]
+              550/1000           0         30/1000        -pi    pi]; %3 via points
+% viapoint [100]
 % Xviapoint = Xviapoint/10.0;
 % Xgoal = [500 0   260  -pi pi]
-itime = [10 12]
+itime = [10]
 %% นำเข้าไปคำนวณ Traj.
 % Tmax = 5
 n = size(Xviapoint)
@@ -37,7 +36,7 @@ for i = 1: n(1)-1
     [Xd5{i},Xv5{i}] = GenTraj(Xviapoint(i,5),Xviapoint(i+1,5),0,itime(i));
 end
 
-% plot taskspace traj.
+% %plot taskspace traj.
 % sumt =0
 % for j = 1:numel(itime)
 %     if j == 1
@@ -53,7 +52,7 @@ end
 %      plot(t_all,Xd4{j},'c')
 %      hold on
 %      plot(t_all,Xv5{j},'m')
-
+% 
 %      hold on
 %      subplot(3,1,2)
 %      hold on
@@ -67,8 +66,8 @@ end
 %      hold on
 %      plot(t_all,Xv5{j},'m')
 %      hold on
-%      subplot(3,1,3)
-%      plot(t_all,X1{j})
+% %      subplot(3,1,3)
+% %      plot(t_all,X1{j})
 %      sumt = sumt + itime(j)
 %     else
 %      t_all = linspace(sumt, itime(j)+sumt, numel(Xd1{j}));
@@ -96,9 +95,9 @@ end
 %      plot(t_all,Xv4{j},'c')
 %      hold on
 %      plot(t_all,Xv5{j},'m')
-%       hold on
-%      subplot(3,1,3)
-%      plot(t_all,Xa_all{j})
+% %       hold on
+% %      subplot(3,1,3)
+% %      plot(t_all,Xa_all{j})
 %      sumt = sumt + itime(j)
 %     end
 % end
@@ -134,6 +133,7 @@ for i =1:n(2)
     end
        qvbar_viapoint{i}=qvbar
 end
+%%
 % plot joint value
 sumt =0
 for j = 1:numel(itime)
@@ -196,6 +196,7 @@ for j = 1:numel(itime)
      sumt = sumt + itime(j)
     end
 end
+%%%%% end plot
 % for i = 1:numel(itime)
 %     for j = 1:5
 %         ind = find(qvbar_viapoint{i}(:,j) == max(qvbar_viapoint{i}(:,j)))
@@ -203,36 +204,9 @@ end
 %         plot(t_all(ind),qvbar_viapoint{i}(ind,j),'*k')
 %     end
 % end
-%% ทดสอบนอกเรื่อง
-% syms q1 q2 q3 q4 q5 wx wy wz vx vy vz h1 h2 l1 l2 l3 real
-% c =@(x) cos(x);
-% s =@(x) sin(x);
-% % link length Update
-% h1= 275.99; % lasted
-% h2= 380;
-% l1= 20.01;
-% l2= 380;
-% l3= 235;
-% DH =[0   0   h1   0;
-%     l1 pi/2  0  pi/2;
-%     h2  0    0  -pi/2;
-%     l2  0    0    0;
-%     0  pi/2  0    0];
-% q=[q1;q2;q3;q4;q5];
-% rho = [1;1;1;1;1];
-% Hne=[1 0 0 0 ;
-%      0 1 0 0; 
-%      0 0 1 l3;
-%      0 0 0 1];
-%  xi = [wx; wy; wz; vx; vy; vz];
-%%  หา Jacobian ก่อน เป็น Jacobian ที่คูณ Jrpy แล้วเนื่องจากมี input เป็น rpy ด้วย
-% H = forwardKinematics(q,rho,DH,Hne);
-% [J,Je] = manipulatorJacobian(q,rho,DH,Hne)
-% Jrpy = [0  -s(q1) c(q1)*s(q2+q3+q4);
-%         0   c(q1) s(q1)*s(q2+q3+q4);
-%         1        0     c(q2+q3+q4)];
-% Jerpy = Jrpy \ Je(1:3,:);
-% newJe = [Jerpy ; Je(4:6,:)]
-% ReducedJe = simplify(newJe(2:end,:));
-% Reducedxi = xi(2:end);
-% DetRJe = simplify(det(ReducedJe));
+%% input simscape
+q1sim = timeseries(qbar(:,1),linspace(0,10,numel(qbar(:,1))));
+q2sim = timeseries(qbar(:,2),linspace(0,10,numel(qbar(:,2))));
+q3sim = timeseries(qbar(:,3),linspace(0,10,numel(qbar(:,3))));
+q4sim = timeseries(qbar(:,4),linspace(0,10,numel(qbar(:,4))));
+q5sim = timeseries(qbar(:,5),linspace(0,10,numel(qbar(:,5))));
