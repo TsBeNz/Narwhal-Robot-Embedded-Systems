@@ -3,11 +3,11 @@ function [qv] = IVK(q,taskspace)
 % c =@(x) cos(x);
 % s =@(x) sin(x);
 % % link length Update
-h1= 275.99/1000; % lasted
-h2= 380/1000;
-l1= 20.01/1000;
-l2= 380/1000;
-l3= 268.23/1000;
+h1= 275.99; % lasted
+h2= 380;
+l1= 20.01;
+l2= 380;
+l3= 268.23;
 % DH =[0   0   h1   0;
 %     l1 pi/2  0  pi/2;
 %     h2  0    0  -pi/2;

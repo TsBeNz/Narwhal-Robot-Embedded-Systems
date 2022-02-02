@@ -1,5 +1,5 @@
 function[qbar,shout] = IKnawhale2(P,rbar,gammabar,h1,h2,l1,l2,l3,DH)
-    R0e = eul2rotm(double(rbar(1:3)),'ZYZ');
+    R0e = eul2rotm(rbar(1:3),'ZYZ');
     flag = 0;
     P004 = P - (R0e*[0;0;l3]);
     [q1,q2,q3,flag] = IPK2(P,P004,gammabar,h1,h2,l1,l2,l3,flag);
