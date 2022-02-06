@@ -1,5 +1,5 @@
 control.c:11:6:control_init	40	static
-control.c:25:6:Kalman_init	40	static
-control.c:35:6:CascadeControl	32	static
-control.c:76:6:TrajectoryCof	32	static
-control.c:81:6:KalmanFilter	32	static
+control.c:26:6:Kalman_init	40	static
+control.c:36:6:CascadeControl	32	static
+control.c:77:6:TrajectoryCof	32	static
+control.c:82:6:KalmanFilter	32	static

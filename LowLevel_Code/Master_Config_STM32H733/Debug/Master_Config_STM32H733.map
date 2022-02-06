@@ -249,16 +249,16 @@ Discarded input sections
  .data          0x0000000000000000        0x0 ./Core/Src/control.o
  .bss           0x0000000000000000        0x0 ./Core/Src/control.o
  .text.control_init
-                0x0000000000000000       0x72 ./Core/Src/control.o
+                0x0000000000000000       0x7a ./Core/Src/control.o
  .text.Kalman_init
                 0x0000000000000000       0x50 ./Core/Src/control.o
  .text.CascadeControl
-                0x0000000000000000      0x1a4 ./Core/Src/control.o
+                0x0000000000000000      0x1cc ./Core/Src/control.o
  .text.TrajectoryCof
                 0x0000000000000000       0xd6 ./Core/Src/control.o
  .text.KalmanFilter
                 0x0000000000000000      0x32c ./Core/Src/control.o
- .debug_info    0x0000000000000000      0xf99 ./Core/Src/control.o
+ .debug_info    0x0000000000000000      0xfa6 ./Core/Src/control.o
  .debug_abbrev  0x0000000000000000      0x240 ./Core/Src/control.o
  .debug_aranges
                 0x0000000000000000       0x40 ./Core/Src/control.o
@@ -334,8 +334,8 @@ Discarded input sections
  .debug_macro   0x0000000000000000       0xa6 ./Core/Src/control.o
  .debug_macro   0x0000000000000000      0x5e6 ./Core/Src/control.o
  .debug_macro   0x0000000000000000       0x1c ./Core/Src/control.o
- .debug_line    0x0000000000000000      0xbc5 ./Core/Src/control.o
- .debug_str     0x0000000000000000   0x162efd ./Core/Src/control.o
+ .debug_line    0x0000000000000000      0xbe0 ./Core/Src/control.o
+ .debug_str     0x0000000000000000   0x162f10 ./Core/Src/control.o
  .comment       0x0000000000000000       0x54 ./Core/Src/control.o
  .debug_frame   0x0000000000000000       0xd4 ./Core/Src/control.o
  .ARM.attributes

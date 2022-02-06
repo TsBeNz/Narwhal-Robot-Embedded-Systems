@@ -1,0 +1,32 @@
+R = 5000;
+Q = 0.01;
+dt = 0.001;
+x1 = 0;
+x2 = 0;
+p11 = 0.001;
+p12 = 0.001;
+p21 = 0.001;
+p22 = 0.001;
+
+n = 10000;
+v_est = zeros(1,n);
+vel = zeros(1,n);
+pos_noise = zeros(1,n);
+pos = zeros(1,n);
+
+% x = -pi:0.01:pi;
+% plot(x,sin(x)), grid on
+
+for a = 1:n
+    pos(a) = 2*pi*sin(a*0.01);
+    vel(a) = 2*pi*cos(a*0.01);
+    pos_noise(a) = pos(a) + 2*rand;
+    
+    [x1,x2,p11,p12,p21,p22] = kalmanFNC(R,Q,dt,pos_noise(a),x1,x2,p11,p12,p21,p22);
+    v_est(a) = x2;
+end
+
+plot(v_est)
+hold on
+plot(vel)
+hold on

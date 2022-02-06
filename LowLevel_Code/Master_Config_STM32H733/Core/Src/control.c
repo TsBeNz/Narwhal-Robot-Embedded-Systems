@@ -61,7 +61,7 @@ void CascadeControl(ControlParameter *Control,KalmanParameter *kalman,int16_t En
 			+ ((Control->PositionError[0] - Control->PositionError[1])	* Control->Pos_Kd);			/* D */
 
 	/*  Velocity  */
-	Control->VelocityError[0] = Control->PositionPIDOutput+ Control->VelocitySetpoint - Control->VelocityFixWindow /*input of velocity controld*/
+	Control->VelocityError[0] = Control->PositionPIDOutput+ Control->VelocitySetpoint - Control->VelocityFixWindow; /*input of velocity controld*/
 	Control->VelocityPIDOutput = (Control->Vel_Kp * (Control->VelocityError[0] - Control->VelocityError[1]))
 			+ (Control->Vel_Ki * Control->VelocityError[0])
 			+ (Control->Vel_Kd	* (Control->VelocityError[0] - 2 * Control->VelocityError[1] + Control->VelocityError[2]));

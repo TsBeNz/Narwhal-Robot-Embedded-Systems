@@ -2,14 +2,14 @@
  * Academic License - for use in teaching, academic research, and meeting
  * course requirements at degree granting institutions only.  Not for
  * government, commercial, or other organizational use.
- * File: _coder_KalmanFNC_info.c
+ * File: _coder_kalmanFNC_info.c
  *
  * MATLAB Coder version            : 5.3
- * C/C++ source code generated on  : 03-Feb-2022 18:14:58
+ * C/C++ source code generated on  : 06-Feb-2022 21:36:36
  */
 
 /* Include Files */
-#include "_coder_KalmanFNC_info.h"
+#include "_coder_kalmanFNC_info.h"
 #include "emlrt.h"
 #include "tmwtypes.h"
 
@@ -51,7 +51,7 @@ mxArray *emlrtMexFcnProperties(void)
       emlrtCreateStructMatrix(1, 1, 6, (const char_T **)&epFieldName[0]);
   xInputs = emlrtCreateLogicalMatrix(1, 10);
   emlrtSetField(xEntryPoints, 0, (const char_T *)"Name",
-                emlrtMxCreateString((const char_T *)"KalmanFNC"));
+                emlrtMxCreateString((const char_T *)"kalmanFNC"));
   emlrtSetField(xEntryPoints, 0, (const char_T *)"NumberOfInputs",
                 emlrtMxCreateDoubleScalar(10.0));
   emlrtSetField(xEntryPoints, 0, (const char_T *)"NumberOfOutputs",
@@ -61,9 +61,9 @@ mxArray *emlrtMexFcnProperties(void)
       xEntryPoints, 0, (const char_T *)"FullPath",
       emlrtMxCreateString(
           (const char_T *)"C:\\github\\Module89-Frab5-G3\\Matlabscript_"
-                          "simscape\\Script\\Kalmanfilter\\KalmanFNC.m"));
+                          "simscape\\Script\\Kalmanfilter\\kalmanFNC.m"));
   emlrtSetField(xEntryPoints, 0, (const char_T *)"TimeStamp",
-                emlrtMxCreateDoubleScalar(738555.75892361114));
+                emlrtMxCreateDoubleScalar(738558.88673611113));
   xResult =
       emlrtCreateStructMatrix(1, 1, 5, (const char_T **)&propFieldName[0]);
   emlrtSetField(
@@ -76,7 +76,7 @@ mxArray *emlrtMexFcnProperties(void)
 }
 
 /*
- * File trailer for _coder_KalmanFNC_info.c
+ * File trailer for _coder_kalmanFNC_info.c
  *
  * [EOF]
  */
