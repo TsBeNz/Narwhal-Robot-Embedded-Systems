@@ -8,49 +8,30 @@
 
 #include "kinematics.h"
 
-void IPK(float x, float y, float z, float pitch, float yaw, float *q) {
-	*q = atan2(y, x);
-	//define part 1
-	float s_pitch = sin(pitch);
-	float c_pitch = cos(pitch);
-	float x24 = (x - 235.0f * s_pitch) - 20.01f;
-	float z24 = (z - 235.0f * c_pitch) - 275.99f;
-	float x24_z24_pow2 = ((x24 * x24) + (z24 * z24));
-
-	if (sqrt(x24_z24_pow2) <= (760)) {
-		float s3 = (x24_z24_pow2 - 288800.0f) / (288800.0f);
-		float c3 = sqrt(1 - (s3 * s3));
-		*(q + 1) = atan2(
-				(-(380.0f + (380.0f * s3)) * x24) + (380.0f * c3 * z24),
-				(380.0f * c3 * x24) + ((380.0f * s3) + 380.0f));
-		*(q + 2) = atan2(s3, c3);
-
-		//define part 2
-		float s1 = sin(*q);
-		float c1 = cos(*q);
-		float s23 = sin(*(q + 1) + *(q + 2));
-		float c23 = cos(*(q + 1) + *(q + 2));
-		float s_yaw = sin(yaw);
-		float c_yaw = cos(yaw);
-		float c_yaw_s_pitch = c_yaw * s_pitch;
-		float s1_s_yaw = s1 * s_yaw;
-		float c_pitch_c1_c_yaw = c_pitch * c1 * c_yaw;
-
-		float r11 = (s23 * c_yaw_s_pitch) + (c23 * s1_s_yaw)
-				+ (c23 * c_pitch_c1_c_yaw);
-		float r21 = (c23 * c_yaw_s_pitch) - (s23 * s1_s_yaw)
-				- (s23 * c_pitch_c1_c_yaw);
-		float r31 = (c_pitch * c_yaw * s1) - (c1 * s_yaw);
-		float c5 = sqrt((r11 * r11) + (r21 * r21));
-		*(q + 3) = atan2(r21, r11);
-		*(q + 4) = atan2(r31, c5);
-
+Kinematics_StatusTypeDef IKnarwhale(float gammabar[3], float chi[4], float q[5]) {
+	float c2;
+	float q2;
+	float q3;
+	float s2;
+	float x24;
+	x24 = gammabar[1] * sqrt(chi[0] * chi[0] + chi[1] * chi[1]) - 20.0;
+	c2 = x24 * x24
+			+ ((chi[2] + 268.23) - 295.89) * ((chi[2] + 268.23) - 295.89);
+	s2 = sqrt(c2);
+	if ((s2 <= 760.0) && (s2 >= 0.0)) {
+		c2 = ((c2 - 144400.0) - 144400.0) / 288800.0;
+		s2 = gammabar[2] * sqrt(1.0 - c2 * c2);
+		q2 = (atan2((chi[2] + 268.23) - 295.89, x24)
+				- atan2(380.0 * s2, 380.0 * c2 + 380.0)) - 1.5707963267948966;
+		q3 = atan2(s2, c2) + 1.5707963267948966;
+		q[0] = atan2(gammabar[0] * chi[1], gammabar[0] * chi[0]);
+		q[1] = q2;
+		q[2] = q3;
+		q[3] = -q2 - q3;
+		q[4] = chi[3];
+		return Kinematics_OK;
 	} else {
-		*(q) = 0;
-		*(q + 1) = 0;
-		*(q + 2) = 0;
-		*(q + 3) = 0;
-		*(q + 4) = 0;
+		return Error_Link_length;
 	}
 }
 

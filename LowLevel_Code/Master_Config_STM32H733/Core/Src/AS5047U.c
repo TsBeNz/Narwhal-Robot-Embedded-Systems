@@ -7,14 +7,20 @@
 
 #include "AS5047U.h"
 
+float EncPulse2Rad_Read(AS5047U *Enc){
+	AS5047U_Speed_Highspeed_Read(Enc);
+//	return (Enc->Position * 0.000383495f) + Enc->Offset;
+	return (Enc->Position * 0.000383495f);
+}
+
 void AS5047U_init(AS5047U *dev, SPI_HandleTypeDef *hspiHandle,
 		GPIO_TypeDef *CSGPIOTypedef, CRC_HandleTypeDef *hcrcHandle,
 		uint16_t CSGPIOPin) {
-
 	dev->hspiHandle = hspiHandle;
 	dev->hcrcHandle = hcrcHandle;
 	dev->CSGPIOTypedef = CSGPIOTypedef;
 	dev->CSGPIOPin = CSGPIOPin;
+//	dev->Offset = Offset;
 	dev->Error_Status.CORDIC_Overflow = 0;
 	dev->Error_Status.Offset_Compensation_Not_Finished = 0;
 	dev->Error_Status.Watchdog_Error = 0;
@@ -25,7 +31,6 @@ void AS5047U_init(AS5047U *dev, SPI_HandleTypeDef *hspiHandle,
 	dev->Error_Status.P2ram_Warning = 0;
 	dev->Error_Status.MagHalf = 0;
 	dev->Error_Status.Agc_warning = 0;
-
 //	Encoder_command(dev,0x001A, 0x0080);
 }
 

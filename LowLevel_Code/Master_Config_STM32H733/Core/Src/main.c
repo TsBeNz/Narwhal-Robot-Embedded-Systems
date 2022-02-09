@@ -211,7 +211,7 @@ int main(void)
 			Contorl_Flag = 0;
 		}
 		if (traj_finish){
-			if(Control.PositionFeedback > 1.5){
+			if(Control[0].PositionFeedback > 1.5){
 				Traj_Coeff_Cal(&Traj[0], 5, 0.5, Control[0].PositionFeedback, Control[0].VelocityFeedback);
 			}
 			else{

@@ -65,6 +65,7 @@ typedef struct {
 	uint16_t CSGPIOPin;
 	uint16_t Position;
 	AS5047UError Error_Status;
+	float Offset;
 } AS5047U;
 
 
@@ -73,13 +74,10 @@ typedef struct {
 /*
  * Function
  */
-
-void AS5047U_init(AS5047U *dev, SPI_HandleTypeDef *hspiHandle,
-		GPIO_TypeDef *CSGPIOTypedef, CRC_HandleTypeDef *hcrcHandle,
-		uint16_t CSGPIOPin);
+float EncPulse2Rad_Read(AS5047U *Enc);
+void AS5047U_init(AS5047U *dev, SPI_HandleTypeDef *hspiHandle, GPIO_TypeDef *CSGPIOTypedef, CRC_HandleTypeDef *hcrcHandle, uint16_t CSGPIOPin);
 void AS5047U_Write(AS5047U *dev,uint16_t Register_Address, uint16_t Data);
 HAL_StatusTypeDef AS5047U_Read(AS5047U *dev,uint16_t Register_Address, uint16_t *Data);
-
 uint16_t AS5047U_Position_Highspeed_Read(AS5047U *dev);
 int16_t AS5047U_Speed_Highspeed_Read(AS5047U *dev);
 void AS5047U_Read_Error(AS5047U *dev);

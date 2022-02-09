@@ -11,12 +11,22 @@
 
 // include stm32h7 driver
 #include "stm32h7xx.h"
+#include "math.h"
+
+
+typedef enum
+{
+  Kinematics_OK       	= 0x00,
+  Error_Link_length    	= 0x01,
+  Singularity     		= 0x02,
+} Kinematics_StatusTypeDef;
+
 
 /*
  * Function
  */
 
-void IPK(float x, float y, float z, float pitch, float yaw, float *q);
+Kinematics_StatusTypeDef IKnarwhale(float gammabar[3], float chi[4], float q[5]);
 void IVK(float v_x, float v_y, float v_z, float v_pitch, float v_yaw, float *q, float *qv);
 
 #endif /* INC_KINEMATICS_H_ */
