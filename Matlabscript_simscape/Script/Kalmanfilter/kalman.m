@@ -21,12 +21,12 @@ k = p_pred * C' /s;
 x_est = simplify(x_pred + k*y_re);
 p_est = simplify((eye(2)-k*C)*p_pred);
 
-% xx1 = x_est(1)
-% xx2 = x_est(2)
-% pp11 = p_est(1,1)
-% pp12 = p_est(1,2)
-% pp21 = p_est(2,1)
-% pp22 = p_est(2,2)
+xx1 = x_est(1)
+xx2 = x_est(2)
+pp11 = p_est(1,1)
+pp12 = p_est(1,2)
+pp21 = p_est(2,1)
+pp22 = p_est(2,2)
 
 
 %SADKARN

@@ -12,55 +12,78 @@
  * Include Driver H7
  */
 #include "stm32h7xx.h"
+//#include "arm_math.h"
 
 #define delta_t 0.001
 #define delta_tPow2 (delta_t * delta_t)
 #define delta_tPow3 (delta_tPow2 * delta_t)
 #define delta_tPow4 (delta_tPow3 * delta_t)
+#define PI               3.14159265358979f
+
+typedef struct {
+	TIM_HandleTypeDef *htim;
+	uint32_t Channel;
+	GPIO_TypeDef *GPIOx;
+	uint16_t GPIO_Pin;
+	uint16_t f_timer;
+	uint8_t DIR_init;
+}SteperParameter;
 
 
 typedef struct {
-	uint8_t ControlEnable[2];				/* [0] = Position , [1] = Velocity */
+	float TrajCoef[6];		/* Trajectory Coefficient */
+	float Last_Pos;
+	float Current_Pos;
+}TrajParameter;
 
-	float TrajectoryCoefficient[6];			/* Trajectory Coefficient */
 
-	int16_t EncoderPosition;				/* Encoder Position */
-	float VelocityFixWindow;				/* Velocity (Find by Ds/Dt) */
-
-	float PositionSetpoint; 				/* Rad	  Input */
-	float Pos_Kp;							/* Position PID Constant Kp Gain*/
-	float Pos_Ki;							/* Position PID Constant Ki Gain*/
-	float Pos_Kd;							/* Position PID Constant Kd Gain*/
-	float EstimatePosition;					/* Position Output form State Estimator(Kaman Filter) */
-	float CurrentPosition;					/* Position */
-	float PositionPIDOutput; 				/* PID Position Output */
-	float PositionError[2];					/* Position Error [0] = Now Error , [1] = Before Error */
-	float PositionITerm;					/* Position I Term Form Position Control*/
-
-	float VelocitySetpoint; 				/* Rad/s  Input (Command Velocity For Feed Forward) */
-	float Vel_Kp;							/* Velocity PID Constant Kp Gain*/
-	float Vel_Ki;							/* Velocity PID Constant Ki Gain*/
-	float Vel_Kd;							/* Velocity PID Constant Kd Gain*/
-	float Vel_Gfeed;						/* Velocity Feedforward Gain */
-	float EstimateVelocity[2];					/* Velocity Output form State Estimator(Kaman Filter)*/
-	float VelocityPIDOutput; 				/* PID Velocity Output */
-	float VelocityError[3];					/* Velocity Error [0] = Now Error , [1] = Before Error */
-	float FrequencyPIDOutput;               /* Frequency Output */
-} ControlParameter;
-
+/* KalmanFilter Variable */
 typedef struct {
-	float sigma_a; 			// Adjustable
-	float sigma_w; 			// Adjustable
-	float p11; 				// Adjustable
+	float Q; 			// Adjustable
+	float R; 			// Adjustable
+	float x1;			// Estimate Position
+	float x2;			// Estimate Velocity
+	float p11;
 	float p12;
 	float p21;
-	float p22; 				// Adjustable
+	float p22;
 }KalmanParameter;
 
-void control_init(ControlParameter *Control,float PosP,float PosI,float PosD,float Vel_Gain_Feed,float VelP,float VelI,float VelD);
-void Kalman_init(KalmanParameter *kalman, float sigma_a, float sigma_w, float p11, float p12, float p21, float p22);
-void CascadeControl(ControlParameter *Control,KalmanParameter *kalman,int16_t Encoder_Position_New);
-void TrajectoryCof(ControlParameter *Control,float traj_t,float traj_tPow2,float traj_tPow3,float traj_tPow4,float traj_tPow5);
-void KalmanFilter(ControlParameter *Control,KalmanParameter *kalman);
+
+typedef struct {
+	float Kp;
+	float Ki;
+	float Kd;
+	float ITerm;
+	float Setpoint;
+	float Feedback;
+	float Error[2];		//Error[0] -> Error @ t , Error[1] = -> Error @ t-1
+	float Output;
+}PIDParameter;
+
+
+typedef struct {
+	PIDParameter Pos;
+	float PositionSetpoint; 				/* Rad	  Input */
+	float PositionFeedback;					/* Position */
+	float PositionPIDOutput;
+	PIDParameter Vel;
+	float VelocitySetpoint; 				/* Rad/s  Input (Command Velocity For Feed Forward) */
+	float VelocityFeedback;					/* Velocity Output form State Estimator(Kaman Filter)*/
+	float VelocityPIDOutput;
+	float Vel_Gfeed;						/* Velocity Feedforward Gain */
+	float Output;
+} ControlParameter;
+
+void Step_Driver_init(SteperParameter *step, TIM_HandleTypeDef *htim, uint32_t Channel, GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, uint32_t f_timer,uint8_t DIR_init);
+void Step_Driver(SteperParameter *step, float f_driver);
+void Kalman_init(KalmanParameter *kalman, double Q, double R);
+void KalmanFilter(KalmanParameter *kalman ,double theta_k);
+void Traj_Coeff_Cal(TrajParameter *Traj, float T, float Pos_Final, float Pos_Now, float Vel_Now);
+void TrajFollow(TrajParameter *Traj, float traj_t[5], float *Position, float *Velocity);
+void PID_init(PIDParameter *PID, float Kp, float Ki, float Kd);
+float PID_Control(PIDParameter *PID,float Setpoint,float Feedback);
+void CascadeControl_init(ControlParameter *Control,float PosP,float PosI,float PosD,float VelP,float VelI,float VelD, float GearRatio ,float StepDriver);
+void CascadeControl(ControlParameter *Control, KalmanParameter *kalman,	float Pos_Feed, float pos_set, float vel_set);
 
 #endif /* INC_CONTROL_H_ */

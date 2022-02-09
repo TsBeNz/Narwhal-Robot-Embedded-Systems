@@ -8,96 +8,197 @@
 #include "control.h"
 
 
-void control_init(ControlParameter *Control,float PosP,float PosI,float PosD,float Vel_Gain_Feed,float VelP,float VelI,float VelD){
-	Control->Pos_Kp = PosP;
-	Control->Pos_Ki = PosI;
-	Control->Pos_Kd = PosD;
-	Control->Vel_Kp = VelP;
-	Control->Vel_Ki = VelI;
-	Control->Vel_Kd = VelD;
-	Control->Vel_Gfeed = Vel_Gain_Feed;
 
-	Control->PositionITerm = 0;
-	Control->PositionPIDOutput = 0;
-	Control->VelocityPIDOutput = 0;
-	Control->FrequencyPIDOutput = 0;
+/*Stepper Driver Function*/
+/*
+ * GPIO for DIR Interface
+ * Timer for Step Interface
+ *
+ *
+ *
+ * Note
+ * __HAL_TIM_SET_COMPARE();		CCR
+ * __HAL_TIM_SET_AUTORELOAD();	ARR
+ */
+void Step_Driver_init(SteperParameter *step, TIM_HandleTypeDef *htim,
+		uint32_t Channel, GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin,
+		uint32_t f_timer,uint8_t DIR_init) {
+	step->htim = htim;
+	step->Channel = Channel;
+	step->GPIOx = GPIOx;
+	step->GPIO_Pin = GPIO_Pin;
+	step->f_timer = f_timer;
+	step->DIR_init = DIR_init;
+	HAL_TIM_PWM_Start(step->htim, step->Channel);
 }
 
-void Kalman_init(KalmanParameter *kalman, float sigma_a, float sigma_w,
-		float p11, float p12, float p21, float p22) {
-	kalman->sigma_a = sigma_a; 			// Adjustable
-	kalman->sigma_w = sigma_w; 			// Adjustable
-	kalman->p11 = p11; 					// Adjustable
-	kalman->p12 = p12;
-	kalman->p21 = p21;
-	kalman->p22 = p22;					// Adjustable
-}
 
-void CascadeControl(ControlParameter *Control,KalmanParameter *kalman,int16_t Encoder_Position_New){
-	/* Input */
-	int16_t Ds = Encoder_Position_New - Control->EncoderPosition;
-
-	//Unwrapping position
-	if (Ds >= 8192) {
-		Ds -= 16383;
-	} else if (Ds <= -8192) {
-		Ds += 16383;
+void Step_Driver(SteperParameter *step, float f_driver) {
+	float abs_f_driver = fabs(f_driver);
+	uint16_t reg_out;
+	if (abs_f_driver <= 5) {
+		reg_out = 10000;
+		step->htim->Instance->ARR = 0;
+		step->htim->Instance->CCR1 = 0;
+	} else if (abs_f_driver < 50) {
+		reg_out = 10000;
+		step->htim->Instance->ARR = reg_out;
+		step->htim->Instance->CCR1 = reg_out >> 1;
+	} else {
+		reg_out = (uint16_t) (step->f_timer / abs_f_driver);
+		step->htim->Instance->ARR = reg_out;
+		step->htim->Instance->CCR1 = reg_out >> 1;
 	}
+	if (f_driver >= 0) {
+		HAL_GPIO_WritePin(step->GPIOx, step->GPIO_Pin, step->DIR_init);
+	} else {
+		HAL_GPIO_WritePin(step->GPIOx, step->GPIO_Pin, step->DIR_init ^ 0x01);
+	}
+}
 
-	/*Start Change Unit*/
-	Control->CurrentPosition = Encoder_Position_New;
-	/*End Change Unit*/
+void Traj_Coeff_Cal(TrajParameter *Traj, float T, float Pos_Final,
+		float Pos_Now, float Vel_Now) {
+	float T_P2 = T * T;
+	float T_P3 = T_P2 * T;
+	float T_P4 = T_P3 * T;
+	float T_P5 = T_P4 * T;
+	float ds = Pos_Now - Pos_Final;
+	float tfv0 = T * Vel_Now;
+	Traj->TrajCoef[0] = Pos_Now;
+	Traj->TrajCoef[1] = Vel_Now;
+	Traj->TrajCoef[3] = -(2 * (5 * ds + 3 * tfv0)) / T_P3;
+	Traj->TrajCoef[4] = (15 * ds + 8 * tfv0) / T_P4;
+	Traj->TrajCoef[5] = -(3 * (2 * ds + tfv0)) / T_P5;
+}
 
-	Control->VelocityFixWindow =  ((float)Ds)/delta_t;
+void TrajFollow(TrajParameter *Traj, float traj_t[5], float *Position,
+		float *Velocity) {
+	*Position = Traj->TrajCoef[0] + (Traj->TrajCoef[1] * traj_t[0])
+			+ (Traj->TrajCoef[3] * traj_t[2]) + (Traj->TrajCoef[4] * traj_t[3])
+			+ (Traj->TrajCoef[5] * traj_t[4]);
+	*Velocity = Traj->TrajCoef[1] + (3 * Traj->TrajCoef[3] * traj_t[1])
+			+ (4 * Traj->TrajCoef[4] * traj_t[3])
+			+ (5 * Traj->TrajCoef[5] * traj_t[3]);
+}
+
+
+/* KalmanFilter Function */
+/*
+ * KalmanFilter
+ *
+ * Q -> Process
+ * R -> Sensor
+ */
+void Kalman_init(KalmanParameter *kalman, double Q, double R) {
+	kalman->Q = Q; 			// Adjustable
+	kalman->R = R; 			// Adjustable
+	kalman->x1 = 0.0;
+	kalman->x2 = 0.0;
+	kalman->p11 = 0.05;
+	kalman->p12 = 0.05;
+	kalman->p21 = 0.05;
+	kalman->p22 = 0.05;
+}
+
+
+/*
+ *	theta_k is Position input
+ */
+void KalmanFilter(KalmanParameter *kalman ,double theta_k) {
+	double b_xx1_tmp;
+	double b_xx2_tmp;
+	double c_xx1_tmp;
+	double c_xx2_tmp;
+	double d_xx1_tmp;
+	double d_xx2_tmp;
+	double e_xx1_tmp;
+	double xx1_tmp;
+	double xx1_tmp_tmp;
+	double xx2_tmp;
+	double xx1,xx2,pp11,pp12,pp21,pp22;
+	xx1_tmp = 4.0 * delta_t * kalman->p12;
+	b_xx1_tmp = 4.0 * delta_t * kalman->p21;
+	c_xx1_tmp = kalman->Q * delta_tPow4;
+	xx1_tmp_tmp = delta_tPow2;
+	d_xx1_tmp = 4.0 * xx1_tmp_tmp * kalman->p22;
+	e_xx1_tmp = ((((4.0 * kalman->R + 4.0 * kalman->p11) + xx1_tmp) + b_xx1_tmp) + c_xx1_tmp)
+			+ d_xx1_tmp;
+	xx1 = ((((((4.0 * kalman->R *kalman->x1+ 4.0 * kalman->p11 * theta_k) + d_xx1_tmp * theta_k)
+			+ 4.0 * kalman->R * delta_t * kalman->x2) + xx1_tmp * theta_k) + b_xx1_tmp * theta_k)
+			+ c_xx1_tmp * theta_k) / e_xx1_tmp;
+	xx2_tmp = kalman->p22 * delta_t;
+	b_xx2_tmp = kalman->Q * delta_tPow3;
+	c_xx2_tmp = b_xx2_tmp / 2.0 + xx2_tmp;
+	d_xx2_tmp = c_xx2_tmp + kalman->p21;
+	xx2_tmp = (((kalman->R + kalman->p11) + delta_t * kalman->p21) + c_xx1_tmp / 4.0) + delta_t * (kalman->p12 + xx2_tmp);
+	xx2 = kalman->x2 - d_xx2_tmp * ((kalman->x1 - theta_k) + delta_t * kalman->x2) / xx2_tmp;
+	pp11 = kalman->R * ((((4.0 * kalman->p11 + xx1_tmp) + b_xx1_tmp) + c_xx1_tmp) + d_xx1_tmp)
+			/ e_xx1_tmp;
+	xx1_tmp = b_xx2_tmp + 2.0 * kalman->p22 * delta_t;
+	pp12 = 2.0 * kalman->R * (xx1_tmp + 2.0 * kalman->p12) / e_xx1_tmp;
+	pp21 = 2.0 * kalman->R * (xx1_tmp + 2.0 * kalman->p21) / e_xx1_tmp;
+	pp22 = (kalman->p22 + kalman->Q * xx1_tmp_tmp) - (c_xx2_tmp + kalman->p12) * d_xx2_tmp / xx2_tmp;
+
+	/*Update Variable*/
+	kalman->x1 = xx1;
+	kalman->x2 = xx2;
+	kalman->p11 = pp11;
+	kalman->p12 = pp12;
+	kalman->p21 = pp21;
+	kalman->p22 = pp22;
+}
+
+void PID_init(PIDParameter *PID, float Kp, float Ki, float Kd) {
+	PID->Kp = Kp;
+	PID->Ki = Ki;
+	PID->Kd = Kd;
+	PID->ITerm = 0;
+	PID->Setpoint = 0;
+	PID->Feedback = 0;
+	PID->Error[0] = 0;
+	PID->Error[1] = 0;
+	PID->Output = 0;
+}
+
+float PID_Control(PIDParameter *PID,float Setpoint,float Feedback){
+	PID->Feedback = Feedback; 	// Feedback Input
+	PID->Setpoint = Setpoint;	// Setpoint Input
+	PID->Error[0] = PID->Setpoint - PID->Feedback;
+	PID->ITerm += PID->Error[0];
+	PID->Output = ((PID->Kp * PID->Error[0]) + (PID->Ki * PID->ITerm)
+			+ (PID->Kp * (PID->Error[0] - PID->Error[1])));
+	PID->Error[1] = PID->Error[0]; // Update Error
+	return PID->Output;
+}
+
+
+void CascadeControl_init(ControlParameter *Control,float PosP,float PosI,float PosD,float VelP,float VelI,float VelD, float GearRatio ,float StepDriver){
+	PID_init(&Control->Pos,PosP,PosI,PosD);
+	PID_init(&Control->Vel,VelP,VelI,VelD);
+	Control->Vel_Gfeed = (GearRatio * StepDriver) / (2*PI);
+}
+
+
+void CascadeControl(ControlParameter *Control, KalmanParameter *kalman,
+		float Pos_Feed, float pos_set, float vel_set) {
+	/*Set Setpoint*/
+	Control->PositionSetpoint = pos_set;
+	Control->VelocitySetpoint = vel_set;
 
 	/*Kalman Filter*/
-	KalmanFilter(Control, kalman);
+	Control->PositionFeedback = Pos_Feed;
+	KalmanFilter(kalman, Control->PositionFeedback); /*Kalman filter */
+	Control->VelocityFeedback = kalman->x2;
 
-	/* Position */
-	Control->PositionError[0] = Control->PositionSetpoint - Control->CurrentPosition;
-	Control->PositionITerm += Control->PositionError[0];
-	Control->PositionPIDOutput = (Control->PositionError[0] * Control->Pos_Kp)						/* P */
-			+ (Control->PositionITerm * Control->Pos_Ki)											/* I */
-			+ ((Control->PositionError[0] - Control->PositionError[1])	* Control->Pos_Kd);			/* D */
-
-	/*  Velocity  */
-	Control->VelocityError[0] = Control->PositionPIDOutput+ Control->VelocitySetpoint - Control->VelocityFixWindow; /*input of velocity controld*/
-	Control->VelocityPIDOutput = (Control->Vel_Kp * (Control->VelocityError[0] - Control->VelocityError[1]))
-			+ (Control->Vel_Ki * Control->VelocityError[0])
-			+ (Control->Vel_Kd	* (Control->VelocityError[0] - 2 * Control->VelocityError[1] + Control->VelocityError[2]));
-	/* Frequency */
-	Control->FrequencyPIDOutput = Control->Vel_Gfeed * (Control->PositionPIDOutput+ Control->VelocitySetpoint); //vel ของ feedforward เป็นที่ sum มาหมดหรือแค่ ออกจาก position
-	/* Update */
-	Control->EncoderPosition = Encoder_Position_New;
-	Control->PositionError[1] = Control->PositionError[0];
-	Control->VelocityError[2] = Control->VelocityError[1];
-	Control->VelocityError[1] = Control->VelocityError[0];
-}
-
-void TrajectoryCof(ControlParameter *Control,float traj_t,float traj_tPow2,float traj_tPow3,float traj_tPow4,float traj_tPow5){
-	Control->PositionSetpoint = Control->TrajectoryCoefficient[0] + (Control->TrajectoryCoefficient[1] * traj_t) + (Control->TrajectoryCoefficient[3] * traj_tPow3) + (Control->TrajectoryCoefficient[4] * traj_tPow4) + (Control->TrajectoryCoefficient[5] * traj_tPow5);
-	Control->VelocitySetpoint = Control->TrajectoryCoefficient[1] + (3 * Control->TrajectoryCoefficient[3] * traj_tPow2) + (4 * Control->TrajectoryCoefficient[4] * traj_tPow3) + (5 * Control->TrajectoryCoefficient[5] * traj_tPow4);
-}
-
-void KalmanFilter(ControlParameter *Control,KalmanParameter *kalman){
-
-	/*  Velocity Estimation (Input By Velocity)  */
-	float Q = kalman->sigma_a * kalman->sigma_a;
-	float R = kalman->sigma_w * kalman->sigma_w;
-	Control->EstimatePosition += Control->EstimateVelocity[1] * delta_t;
-	Control->EstimateVelocity[0] = 0 + Control->EstimateVelocity[1];
-	float ye = Control->VelocityFixWindow - Control->EstimateVelocity[0];  // Input
-	kalman->p11 = kalman->p11 + delta_t * kalman->p21 + (Q * delta_tPow4) / 4 + (delta_tPow2 * (kalman->p12 + delta_t * kalman->p22)) / delta_t;
-	kalman->p12 = kalman->p12 + delta_t * kalman->p22 + (Q * delta_tPow3) / 2;
-	kalman->p21 = (2 * delta_t * kalman->p21 + Q * delta_tPow2 + 2 * kalman->p22 * delta_tPow2)	/ (2 * delta_t);
-	kalman->p22 = Q * delta_tPow2 + kalman->p22;
-	Control->EstimatePosition += (kalman->p12 * ye) / (R + kalman->p22);
-	Control->EstimateVelocity[0] += (kalman->p22 * ye) / (R + kalman->p22);
-	kalman->p11 = kalman->p11 - (kalman->p12 * kalman->p21) / (R + kalman->p22);
-	kalman->p12 = kalman->p12 - (kalman->p12 * kalman->p22) / (R + kalman->p22);
-	kalman->p21 = -kalman->p21 * (kalman->p22 / (R + kalman->p22) - 1);
-	kalman->p22 = -kalman->p22 * (kalman->p22 / (R + kalman->p22) - 1);
-
-	/*	Update	*/
-	Control->EstimateVelocity[1] = Control->EstimateVelocity[0];
+	/*Position PID Control*/
+	Control->PositionPIDOutput = PID_Control(&Control->Pos,
+			Control->PositionSetpoint, Control->PositionFeedback);
+	/*Feedforward Velocity*/
+	Control->VelocitySetpoint += Control->PositionPIDOutput;
+	/*Velocity PID Control*/
+	Control->VelocityPIDOutput = PID_Control(&Control->Vel,
+			Control->VelocitySetpoint, Control->VelocityFeedback);
+	/*Feedforward Velocity Setpoint*/
+	Control->Output = (Control->Vel_Gfeed * Control->VelocitySetpoint)
+			+ Control->VelocityPIDOutput;
 }

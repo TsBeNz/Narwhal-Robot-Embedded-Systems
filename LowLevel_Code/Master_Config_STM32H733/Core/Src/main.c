@@ -48,19 +48,27 @@
 
 
 // Module 8-9 Variable Section
+float Temperature;
+float Temp_Calibration;
 
-AS5047U Encoder;
+uint8_t Contorl_Flag;
+
+TrajParameter Traj[4];
+AS5047U Encoder[4];
+KalmanParameter Kalman[4];
+ControlParameter Control[4];
+SteperParameter Stepper[4];
 
 
+uint8_t traj_finish = 0;
+float traj_t_set[4];
+float t,T_Traj;
 
+
+float pos,vel,dt_test,f_out,position_test;
+uint16_t reg_out;
 // Solfware timer
 uint32_t Last_Update_Time_MS;
-
-struct System_Status_Type {
-	float Temperature;
-	float Vin;
-};
-struct System_Status_Type System_Status;
 
 uint8_t UART1_rxBuffer[14] = {0};
 uint8_t UART1_txBuffer[14] = {0};
@@ -83,15 +91,9 @@ void SystemClock_Config(void);
 void PeriphCommonClock_Config(void);
 /* USER CODE BEGIN PFP */
 
-//void CascadeControl(void);
-//uint16_t Encoder_Position_SPI(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
-//int16_t Encoder_Speed_SPI(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
-//void Encoder_Setup();
-//void Encoder_command(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin,uint16_t Address, uint16_t command_input);
-//void StartUp_Init_Parameter(void);
 //uint8_t crc_uart(void);
 //void Uart1_Sent(void);
-
+void Joint_Traj(float *Position, float *Velocity);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -162,35 +164,33 @@ int main(void)
 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_5, 1);
 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_6, 1);
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_6, 1);
-	HAL_TIM_Base_Start(&htim24); 		// Ms delay timer
 
-	HAL_Delay(10);
-//	Contorl_Flag |= 0x02; //Use QEI
-
-//	Encoder_Setup(); // Change Resolution ABI to 14 bits
-
+	Temp_Calibration = (110.0 - 30.0)	/ (*(unsigned short*) (0x1FF1E840) - *(unsigned short*) (0x1FF1E820));
 	HAL_ADCEx_Calibration_Start(&hadc3, ADC_CALIB_OFFSET, ADC_SINGLE_ENDED);
 
 //	HAL_UART_Receive_IT(&huart1, UART1_rxBuffer, 14);
   	while (HAL_UART_Receive_DMA(&huart1, UART1_rxBuffer, 14) != HAL_OK)
 
-	HAL_TIM_PWM_Start(&htim13, TIM_CHANNEL_1);
-	HAL_TIM_PWM_Start(&htim14, TIM_CHANNEL_1);
-	HAL_TIM_PWM_Start(&htim15, TIM_CHANNEL_1);
-	HAL_TIM_PWM_Start(&htim15, TIM_CHANNEL_2);
-	HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
-	HAL_TIM_PWM_Start(&htim17, TIM_CHANNEL_1);
+	AS5047U_init(&Encoder[0], &hspi3, GPIOD, &hcrc, GPIO_PIN_5);
+	Kalman_init(&Kalman[0], 5000,0.001);
+	CascadeControl_init(&Control[0], 0.5, 0, 0, 0.2, 0, 0, 9, 1600);
+	Step_Driver_init(&Stepper[0], &htim15, TIM_CHANNEL_1, GPIOE, GPIO_PIN_3, 500000, 0);
+	HAL_TIM_Base_Start_IT(&htim23);
+	/*Go2Home*/
+//	while (1) {
+//		if (Contorl_Flag) {
+//			float Position;
+//			AS5047U_Position_Highspeed_Read(&Encoder[0]);
+//			position_test = (float) (Encoder[0].Position) * PI / 8192.0f;
+//			CascadeControl(&Control[0], &Kalman[0], position_test, Position,0);
+//			Step_Driver(&Stepper[0], Control[0].Output);
+//			Contorl_Flag = 0;
+//		}
+//		if (Con){
+//
+//		}
+//	}
 
-	HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
-	HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
-	HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
-	HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL);
-	HAL_TIM_Encoder_Start(&htim5, TIM_CHANNEL_ALL);
-	HAL_TIM_Encoder_Start(&htim8, TIM_CHANNEL_ALL);
-
-	HAL_TIM_Base_Start(&htim6);			// ตัวจับเวลา
-	HAL_TIM_Base_Start_IT(&htim23); 	// Interrupt Timer
-	AS5047U_init(&Encoder, &hspi3, GPIOD, &hcrc, GPIO_PIN_5);
 
   /* USER CODE END 2 */
 
@@ -201,65 +201,31 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-//		if (Uart_Flag & 0x01) {
-//			Uart_Flag &= 0xFE; // Clear Flag
-//			if (UART1_rxBuffer[0] & 0xFF && UART1_rxBuffer[1] & 0xFF) {
-//				uint8_t Crc_Uart_Output = crc_uart();
-//				if (UART1_rxBuffer[13] == Crc_Uart_Output) {
-//					uint8_t Ping_Command_Buffer[14] = { 255, 255, 0x11, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-//					switch (UART1_rxBuffer[2]) {
-//					case 0x11:
-//						// ping
-//						Uart1_Sent();
-//						break;
-//					default:
-//						// Command Error
-//						break;
-//					}
-//				} else {
-//					// Checksum error
-//					uint8_t Error_Checksum_Buffer[14] = { 255, 255, 70, 97, 105,	108, 33, 33, 0, 0, 0, 0, 0, 0 };
-//
-//					HAL_UART_Transmit(&huart1, UART1_txBuffer, 14, 100);
-//				}
-//			} else{
-//				// Header error เเ�?้  Command ด้วย
-//				uint8_t Error_Header_Buffer[14] = { 255, 255, 70, 97, 105,	108, 33, 33, 0, 0, 0, 0, 0, 0 };
-//
-//				HAL_UART_Transmit(&huart1, UART1_txBuffer, 14, 100);
-//			}
-//		}
-////		float32_t c = 0.1;
-////		float32_t d = arm_cos_f32(c);
-//		test_encoder_QEI[0] = TIM5->CNT;
-//		test_encoder_QEI[1] = TIM4->CNT;
-//		test_encoder_QEI[2] = TIM8->CNT;
-//		test_encoder_QEI[3] = TIM1->CNT;
-//		test_encoder_QEI[4] = TIM3->CNT;
-//		test_encoder_QEI[5] = TIM2->CNT;
-//		output_spi_test2 = Encoder_Position_SPI(GPIOD,GPIO_PIN_5);
-//
-		int a = HAL_GetTick();
-		if (a - Last_Update_Time_MS >= 100) {
-			Last_Update_Time_MS = a;
-			AS5047U_Position_Highspeed_Read(&Encoder);
-
-//			HAL_ADC_Start_IT(&hadc3); //read temperature sensor
-//			HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_8);
-//			TIM13->ARR += 30;
-//			TIM13->CCR1 = TIM13->ARR/2;
-//			TIM14->ARR += 30;
-//			TIM14->CCR1 = TIM14->ARR/2;
-//			TIM15->ARR += 30;
-//			TIM15->CCR2 = TIM15->ARR/2;
-//			TIM16->ARR += 30;
-//			TIM16->CCR1 = TIM16->ARR/2;
-//			TIM17->ARR += 30;
-//			TIM17->CCR1 = TIM17->ARR/2;
-
+		if (Contorl_Flag) {
+			float Position, Velocity;
+			Joint_Traj(&Position,&Velocity);
+			AS5047U_Position_Highspeed_Read(&Encoder[0]);
+			position_test = (float) (Encoder[0].Position) * PI / 8192.0f;
+			CascadeControl(&Control[0], &Kalman[0], position_test,Position,Velocity);
+			Step_Driver(&Stepper[0], Control[0].Output);
+			Contorl_Flag = 0;
 		}
-
-
+		if (traj_finish){
+			if(Control.PositionFeedback > 1.5){
+				Traj_Coeff_Cal(&Traj[0], 5, 0.5, Control[0].PositionFeedback, Control[0].VelocityFeedback);
+			}
+			else{
+				Traj_Coeff_Cal(&Traj[0], 5, 1.6, Control[0].PositionFeedback, Control[0].VelocityFeedback);
+			}
+			traj_finish = 0;
+			T_Traj = 5;
+		}
+		int a = HAL_GetTick();
+		if (a - Last_Update_Time_MS >= 1000) {
+			Last_Update_Time_MS = a;
+			HAL_ADC_Start_IT(&hadc3); 					//read temperature sensor
+			HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_9);
+		}
 	}
   /* USER CODE END 3 */
 }
@@ -360,223 +326,47 @@ void PeriphCommonClock_Config(void)
 //	Uart_Flag |= 0x01;
 //    HAL_UART_Receive_IT(&huart1, UART1_rxBuffer, 14);
 //}
-//
+
+
 //void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart){
 ////	__HAL_UART_CLEAR_OREFLAG(huart);
 ////    HAL_UART_DeInit();
 //    HAL_UART_Receive_DMA(&huart1, UART1_rxBuffer, 14);
 //}
-//
-//void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc){
-//	uint32_t ADC_Output = HAL_ADC_GetValue(&hadc3);
-//	System_Status.Temperature = Temp_Calibration * (float)((float)ADC_Output - *(unsigned short*) (0x1FF1E820)) + 30.0f;
-////	System_Status.Vin = 0.0008056640625f*ADC_Output;
-//}
-//
-//void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-//	if (htim == &htim23) {
-//		//control loop
-//		count_time_blink_led++;
-//		if(count_time_blink_led>=100){
-//			count_time_blink_led = 0;
-//		}
-//		Contorl_Flag |= 0x01;
-//	}
-//}
 
-//void Uart1_Sent(){
-//	UART1_txBuffer[13] = crc_uart();
-//	HAL_UART_Transmit(&huart1, UART1_txBuffer, 14, 100);
-//}
-//
-//inline uint8_t crc_uart(){
-//	return (uint8_t) HAL_CRC_Calculate(&hcrc, (uint32_t*)UART1_rxBuffer, 13) ^ 0xFF;
-//}
-//
-//inline void CascadeControl() {
-//
-//	static float TrajectoryTime = 0;
-//	static float TrajectoryTimeSetpoint = 0;
-//
-//	// Update Encoder Position
-//
-//	int JointCount = 0;
-//	float TrajectoryTimePow2 = TrajectoryTime * TrajectoryTime;
-//	float TrajectoryTimePow3 = TrajectoryTimePow2 * TrajectoryTime;
-//	float TrajectoryTimePow4 = TrajectoryTimePow3 * TrajectoryTime;
-//	float TrajectoryTimePow5 = TrajectoryTimePow4 * TrajectoryTime;
-//
-//	// Trajectory Motion Calculation
-//
-//	if (TrajectoryMoveStatus) {
-//		for (JointCount = 0; JointCount < 5; JointCount++) {
-//		Joint[JointCount].PositionPIDInput = Joint[JointCount].TrajectoryCoefficient[0]	+ (Joint[JointCount].TrajectoryCoefficient[1] * TrajectoryTime) + (Joint[JointCount].TrajectoryCoefficient[3] * TrajectoryTimePow3) + (Joint[JointCount].TrajectoryCoefficient[4] * TrajectoryTimePow4) + (Joint[JointCount].TrajectoryCoefficient[5] * TrajectoryTimePow5);
-//		Joint[JointCount].VelocitySetpoint = Joint[JointCount].TrajectoryCoefficient[1] + (3 * Joint[JointCount].TrajectoryCoefficient[3] * TrajectoryTimePow2) + (4 * Joint[JointCount].TrajectoryCoefficient[4] * TrajectoryTimePow3) + (5 * Joint[JointCount].TrajectoryCoefficient[5] * TrajectoryTimePow4);
-//		}
-//	}
-//
-//
-//	// Only Joint 1-4 (Stepper with Encoder Feedback)
-//	for (JointCount = 0; JointCount < 4 ; JointCount++)
-//	{
-//		//Velocity Fix Window
-//		float DeltaPosition = Joint[JointCount].EncoderPosition[0] - Joint[JointCount].EncoderPosition[1];
-//		DeltaPosition /= 1000;
-//		Joint[JointCount].VelocityFixWindow = DeltaPosition / ControlLoopTime;
-//
-//		//Velocity Estimation (Input By Velocity)
-//		float Q = sigma_a[JointCount] * sigma_a[JointCount];
-//		float R = sigma_w[JointCount] * sigma_w[JointCount];
-//		Joint[JointCount].EstimatePosition[0] = Joint[JointCount].EstimatePosition[0] + Joint[JointCount].EstimateVelocity[1] * ControlLoopTime;
-//		Joint[JointCount].EstimateVelocity[0] = 0 + Joint[JointCount].EstimateVelocity[1];
-//		float ye = Joint[JointCount].VelocityFixWindow - Joint[JointCount].EstimateVelocity[0];  // Input
-//		p11[JointCount] = p11[JointCount] + ControlLoopTime * p21[JointCount] + (Q * ControlLoopTimePow4) / 4 + (ControlLoopTimePow2 * (p12[JointCount] + ControlLoopTime * p22[JointCount])) / ControlLoopTime;
-//		p12[JointCount] = p12[JointCount] + ControlLoopTime * p22[JointCount] + (Q * ControlLoopTimePow3) / 2;
-//		p21[JointCount] = (2 * ControlLoopTime * p21[JointCount] + Q * ControlLoopTimePow2 + 2 * p22[JointCount] * ControlLoopTimePow2) / (2 * ControlLoopTime);
-//		p22[JointCount] = Q * ControlLoopTimePow2 + p22[JointCount];
-//		Joint[JointCount].EstimatePosition[0] += (p12[JointCount] * ye) / (R + p22[JointCount]);
-//		Joint[JointCount].EstimateVelocity[0] = Joint[JointCount].EstimateVelocity[0] + (p22[JointCount] * ye) / (R + p22[JointCount]);
-//		p11[JointCount] = p11[JointCount] - (p12[JointCount] * p21[JointCount]) / (R + p22[JointCount]);
-//		p12[JointCount] = p12[JointCount] - (p12[JointCount] * p22[JointCount]) / (R + p22[JointCount]);
-//		p21[JointCount] = -p21[JointCount] * (p22[JointCount] / (R + p22[JointCount]) - 1);
-//		p22[JointCount] = -p22[JointCount] * (p22[JointCount] / (R + p22[JointCount]) - 1);
-//
-//		// Position Controller
-//		Joint[JointCount].PositionError[0] = Joint[JointCount].PositionPIDInput - Joint[JointCount].EncoderPosition[0];
-//		Joint[JointCount].PositionPIDOutput = Joint[JointCount].PositionError[0] * Joint[JointCount].PositionPConstant;
-//
-//		// Velocity Controller
-//		if (Joint[JointCount].ControlEnable[1] == 1) {
-//			Joint[JointCount].VelocitySetpoint += Joint[JointCount].PositionPIDOutput;
-//		}
-//		Joint[JointCount].VelocityError[0] = Joint[JointCount].VelocitySetpoint - Joint[JointCount].EstimateVelocity[0];
-//		Joint[JointCount].VelocityITerm += Joint[JointCount].VelocityError[0];
-//		Joint[JointCount].VelocityPIDOutput = (Joint[JointCount].VelocityError[0] * Joint[JointCount].VelocityPIDConstant[0]) + (Joint[JointCount].VelocityITerm * Joint[JointCount].VelocityPIDConstant[1]) + ((Joint[JointCount].VelocityError[0] - Joint[JointCount].VelocityError[1]) * Joint[JointCount].VelocityPIDConstant[2]);
-//
-//		//Update Parameter
-//		Joint[JointCount].EncoderPosition[1] = Joint[JointCount].EncoderPosition[0];
-//		Joint[JointCount].PositionError[1] = Joint[JointCount].PositionError[0];
-//		Joint[JointCount].VelocityError[1] = Joint[JointCount].VelocityError[0];
-//		Joint[JointCount].EstimatePosition[1] = Joint[JointCount].EstimatePosition[0];
-//		Joint[JointCount].EstimateVelocity[1] = Joint[JointCount].EstimateVelocity[0];
-//
-//
-//		if(Joint[JointCount].VelocityPIDOutput > 10000){
-//			Joint[JointCount].VelocityPIDOutput = 10000;
-//		}
-//		else if(Joint[JointCount].VelocityPIDOutput < -10000){
-//			Joint[JointCount].VelocityPIDOutput = 10000;
-//		}
-//
-//	}
-//
-//	// Update Trajectory Path & Parameter
-//	if (TrajectoryNewSetpoint) {
-//
-//		// time set point calculation
-//		TrajectoryTimeSetpoint = 10;
-//		// time set point?
-//
-//		float TrajectoryTimeSetpointPow2 = TrajectoryTimeSetpoint * TrajectoryTimeSetpoint;
-//		float TrajectoryTimeSetpointPow3 = TrajectoryTimeSetpointPow2 * TrajectoryTimeSetpoint;
-//		float TrajectoryTimeSetpointPow4 = TrajectoryTimeSetpointPow3 * TrajectoryTimeSetpoint;
-//		float TrajectoryTimeSetpointPow5 = TrajectoryTimeSetpointPow4 * TrajectoryTimeSetpoint;
-//		for (JointCount = 0; JointCount < 5; JointCount++) {
-//			float ds = Joint[JointCount].EncoderPosition[0] - Joint[JointCount].PositionSetpoint;
-//			float tfv0 = TrajectoryTimeSetpoint * Joint[JointCount].EstimateVelocity[0];
-//
-//			Joint[JointCount].TrajectoryCoefficient[0] = Joint[JointCount].EncoderPosition[0];
-//			Joint[JointCount].TrajectoryCoefficient[1] = Joint[JointCount].EstimateVelocity[0];
-//			Joint[JointCount].TrajectoryCoefficient[3] = -(2*(5*ds + 3*tfv0))/TrajectoryTimeSetpointPow3;
-//			Joint[JointCount].TrajectoryCoefficient[4] = (15 * ds + 8 * tfv0)/TrajectoryTimeSetpointPow4;
-//			Joint[JointCount].TrajectoryCoefficient[5] = -(3*(2* ds + tfv0))/TrajectoryTimeSetpointPow5;
-//
-//		}
-//		TrajectoryMoveStatus = 1;
-//		TrajectoryNewSetpoint = 0;
-//		TrajectoryTime = 0;
-//	}
-//	else {
-//		if (TrajectoryMoveStatus) {
-//			TrajectoryTime += ControlLoopTime;
-//			if (TrajectoryTime > TrajectoryTimeSetpoint) {
-//				TrajectoryTime = 0;
-//				TrajectoryMoveStatus = 0;
-//			}
-//		}
-//	}
-//}
-//
-//
-//
-//void StartUp_Init_Parameter(void){
-//	// Control Parameter
-//	Joint[0].PositionPConstant = 1;
-//	Joint[0].VelocityPIDConstant[0] = 1;
-//	Joint[0].VelocityPIDConstant[1] = 0;
-//	Joint[0].VelocityPIDConstant[2] = 0;
-//	Joint[0].DigitalIO_Port[0] = GPIOD;		// SPI CS
-//	Joint[0].DigitalIO_Port[1] = GPIOE;		// DIR
-//	Joint[0].DigitalIO_Pin[0] = GPIO_PIN_5;
-//	Joint[0].DigitalIO_Pin[1] = GPIO_PIN_0;
-//	Joint[0].TIMx_PWM = TIM13;
-//	Joint[0].TIMx_ENC = TIM5;
-//
-//	Joint[1].PositionPConstant = 1;
-//	Joint[1].VelocityPIDConstant[0] = 1;
-//	Joint[1].VelocityPIDConstant[1] = 0;
-//	Joint[1].VelocityPIDConstant[2] = 0;
-//	Joint[1].DigitalIO_Port[0] = GPIOD;		// SPI CS
-//	Joint[1].DigitalIO_Port[1] = GPIOE;		// DIR
-//	Joint[1].DigitalIO_Pin[0] = GPIO_PIN_4;
-//	Joint[1].DigitalIO_Pin[1] = GPIO_PIN_1;
-//	Joint[1].TIMx_PWM = TIM14;
-//	Joint[0].TIMx_ENC = TIM4;
-//
-//	Joint[2].PositionPConstant = 1;
-//	Joint[2].VelocityPIDConstant[0] = 1;
-//	Joint[2].VelocityPIDConstant[1] = 0;
-//	Joint[2].VelocityPIDConstant[2] = 0;
-//	Joint[2].DigitalIO_Port[0] = GPIOD;		// SPI CS
-//	Joint[2].DigitalIO_Port[1] = GPIOE;		// DIR
-//	Joint[2].DigitalIO_Pin[0] = GPIO_PIN_3;
-//	Joint[2].DigitalIO_Pin[1] = GPIO_PIN_3;
-//	Joint[2].TIMx_PWM = TIM16;
-//	Joint[0].TIMx_ENC = TIM8;
-//
-//	Joint[3].PositionPConstant = 1;
-//	Joint[3].VelocityPIDConstant[0] = 1;
-//	Joint[3].VelocityPIDConstant[1] = 0;
-//	Joint[3].VelocityPIDConstant[2] = 0;
-//	Joint[3].DigitalIO_Port[0] = GPIOD;		// SPI CS
-//	Joint[3].DigitalIO_Port[1] = GPIOE;		// DIR
-//	Joint[3].DigitalIO_Pin[0] = GPIO_PIN_2;
-//	Joint[3].DigitalIO_Pin[1] = GPIO_PIN_4;
-//	Joint[3].TIMx_PWM = TIM17;
-//	Joint[0].TIMx_ENC = TIM1;
-//
-//	Joint[4].PositionPConstant = 1;
-//	Joint[4].VelocityPIDConstant[0] = 1;
-//	Joint[4].VelocityPIDConstant[1] = 0;
-//	Joint[4].VelocityPIDConstant[2] = 0;
-//	Joint[4].DigitalIO_Port[0] = GPIOD;		// SPI CS
-//	Joint[4].DigitalIO_Port[1] = GPIOE;		// DIR
-//	Joint[4].DigitalIO_Pin[0] = GPIO_PIN_1;
-//	Joint[4].DigitalIO_Pin[1] = GPIO_PIN_2;
-//	Joint[4].TIMx_PWM = TIM13;
-//	Joint[0].TIMx_ENC = TIM3;
-//
-//	for (int k = 0; k < 5; k++) {
-//		Joint[k].ControlEnable[0] = 1;
-//		Joint[k].ControlEnable[1] = 1;
-//	}
-//
-//	Temp_Calibration =
-//			(110.0 - 30.0)
-//					/ (*(unsigned short*) (0x1FF1E840)
-//							- *(unsigned short*) (0x1FF1E820));
-//}
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
+	if (hadc == &hadc3) {
+		uint32_t ADC_Output = HAL_ADC_GetValue(&hadc3);
+		Temperature = Temp_Calibration
+				* (float) ((float) ADC_Output - *(unsigned short*) (0x1FF1E820))
+				+ 30.0f;
+	}
+}
 
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	if (htim == &htim23) {
+		Contorl_Flag = 1;
+	}
+}
+
+void Joint_Traj(float *Position, float *Velocity){
+	if(!traj_finish){
+		float traj_t_set[5];
+		traj_t_set[0] = t;
+		traj_t_set[1] = t*t;
+		traj_t_set[2] = traj_t_set[1]*t;
+		traj_t_set[3] = traj_t_set[2]*t;
+		traj_t_set[4] = traj_t_set[3]*t;
+		/*for loop For 4 Join*/
+		TrajFollow(&Traj[0], traj_t_set, Position, Velocity);
+		/*for loop For 4 Join*/
+		t += delta_t;
+		if (t > T_Traj){
+			traj_finish = 1;
+			t = 0;
+		}
+	}
+}
 
 /* USER CODE END 4 */
 

@@ -112,7 +112,6 @@ inline uint16_t AS5047U_Position_Highspeed_Read(AS5047U *dev){
 	HAL_SPI_Receive(dev->hspiHandle, Buffer, 2, 1);
 	HAL_GPIO_WritePin(dev->CSGPIOTypedef, dev->CSGPIOPin, 1);
 	dev->Position = (((uint16_t)Buffer[0]&0x3F) << 8) | (uint16_t)Buffer[1];
-
 	return dev->Position;
 }
 
