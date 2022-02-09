@@ -16,7 +16,8 @@ l3= 268.23;
 %(65.4+416) 0 ((180+310-150)) 0 0               (20+380) 0 ((251+380-285))
 % P = TaskVar(1:3)'
 % rbar = [0 TaskVar(4:5)]
-chi = [(l1+l2) 0 (h1+h2-l3) 0]
+% chi = [(l1+l2) 0 (h1+h2-l3) 0]
+chi = [356.3070 -205.7139 -89.4813 0]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 DH =[0   0   h1   0;
     l1 pi/2  0  pi/2;
@@ -29,12 +30,17 @@ gammabar = [1 1 -1];
 % [qbar] = IKnawhale2(P,rbar,gammabar,h1,h2,l1,l2,l3,DH)
 % [qbar] = IKnarwhale3(P,rbar,gammabar,h1,h2,l1,l2,l3)
 [qbar] = IKnarwhale5(chi,gammabar,h1,h2,l1,l2,l3)
-% test = [0;
-%     0.8900;
-%     1.2696;
-%    -2.1596;
-%     3.1416]
-[H1,H2,H3,H4,H5,He] = FKnawhale(qbar,l3,DH)  
+test = [-pi/6;
+    -pi/4;
+    -pi/6;
+     1.4;
+    pi/2]
+test2 = [-0.5236;
+        -0.8029;
+        -0.4520;
+        1.2549;
+            0]
+[H1,H2,H3,H4,H5,He] = FKnawhale(test2,l3,DH)  
 % f = eul2rotm([],'ZYZ')
 karn= qbar
 %% data to simscape
