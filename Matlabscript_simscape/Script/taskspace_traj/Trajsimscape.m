@@ -5,11 +5,11 @@ Tmax = 5
 % q3f= 0
 % q4f= 0
 % q5f= 0.0786
-[q1VSt,t1f] = GenTraj(0,-pi/6,0,Tmax);
-[q2VSt,t2f] = GenTraj(0,-pi/4,0,Tmax);
-[q3VSt,t3f] = GenTraj(0,-pi/6,0,Tmax);
-[q4VSt,t4f] = GenTraj(0,1.4,0,Tmax);
-[q5VSt,t5f] = GenTraj(0,pi/2,0,Tmax);
+[q1VSt,t1f] = GenTraj(0,0.0840,0,Tmax);
+[q2VSt,t2f] = GenTraj(0,-0.3396,0,Tmax);
+[q3VSt,t3f] = GenTraj(0,-0.6426,0,Tmax);
+[q4VSt,t4f] = GenTraj(0,0.9822,0,Tmax);
+[q5VSt,t5f] = GenTraj(0,0,0,Tmax);
 % tall = [t1f t2f t3f t4f t5f];
 % T = max(tall)
 % %% convert qiVSt  to timeseries for import to simulink

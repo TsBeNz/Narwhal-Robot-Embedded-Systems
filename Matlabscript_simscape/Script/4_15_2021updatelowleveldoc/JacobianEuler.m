@@ -29,5 +29,5 @@ Jerpy = Jrpy \ Je(1:3,:);
 % Jerpy = inv(Jrpy) * Je(1:3,:);
 newJe = [Jerpy ; Je(4:6,:)];
 ReducedJe = simplify(newJe(2:end,:));
-DetRJe = simplify(det(ReducedJe))
+DetRJe = simplify(det(ReducedJe));
 % sad = solve(DetRJe,[q2,q3,q4],'ReturnConditions',true,'Real',true)
