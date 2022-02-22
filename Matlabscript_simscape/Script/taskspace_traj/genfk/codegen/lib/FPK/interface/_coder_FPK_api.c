@@ -5,7 +5,7 @@
  * File: _coder_FPK_api.c
  *
  * MATLAB Coder version            : 5.3
- * C/C++ source code generated on  : 13-Feb-2022 15:02:06
+ * C/C++ source code generated on  : 21-Feb-2022 17:01:06
  */
 
 /* Include Files */
@@ -31,13 +31,22 @@ emlrtContext emlrtContextGlobal = {
 static real_T (*b_emlrt_marshallIn(const emlrtStack *sp, const mxArray *u,
                                    const emlrtMsgIdentifier *parentId))[5];
 
-static real_T (*c_emlrt_marshallIn(const emlrtStack *sp, const mxArray *src,
+static real_T c_emlrt_marshallIn(const emlrtStack *sp, const mxArray *l3,
+                                 const char_T *identifier);
+
+static real_T d_emlrt_marshallIn(const emlrtStack *sp, const mxArray *u,
+                                 const emlrtMsgIdentifier *parentId);
+
+static real_T (*e_emlrt_marshallIn(const emlrtStack *sp, const mxArray *src,
                                    const emlrtMsgIdentifier *msgId))[5];
 
 static real_T (*emlrt_marshallIn(const emlrtStack *sp, const mxArray *q,
                                  const char_T *identifier))[5];
 
 static const mxArray *emlrt_marshallOut(const real_T u[3]);
+
+static real_T f_emlrt_marshallIn(const emlrtStack *sp, const mxArray *src,
+                                 const emlrtMsgIdentifier *msgId);
 
 /* Function Definitions */
 /*
@@ -50,7 +59,41 @@ static real_T (*b_emlrt_marshallIn(const emlrtStack *sp, const mxArray *u,
                                    const emlrtMsgIdentifier *parentId))[5]
 {
   real_T(*y)[5];
-  y = c_emlrt_marshallIn(sp, emlrtAlias(u), parentId);
+  y = e_emlrt_marshallIn(sp, emlrtAlias(u), parentId);
+  emlrtDestroyArray(&u);
+  return y;
+}
+
+/*
+ * Arguments    : const emlrtStack *sp
+ *                const mxArray *l3
+ *                const char_T *identifier
+ * Return Type  : real_T
+ */
+static real_T c_emlrt_marshallIn(const emlrtStack *sp, const mxArray *l3,
+                                 const char_T *identifier)
+{
+  emlrtMsgIdentifier thisId;
+  real_T y;
+  thisId.fIdentifier = (const char_T *)identifier;
+  thisId.fParent = NULL;
+  thisId.bParentIsCell = false;
+  y = d_emlrt_marshallIn(sp, emlrtAlias(l3), &thisId);
+  emlrtDestroyArray(&l3);
+  return y;
+}
+
+/*
+ * Arguments    : const emlrtStack *sp
+ *                const mxArray *u
+ *                const emlrtMsgIdentifier *parentId
+ * Return Type  : real_T
+ */
+static real_T d_emlrt_marshallIn(const emlrtStack *sp, const mxArray *u,
+                                 const emlrtMsgIdentifier *parentId)
+{
+  real_T y;
+  y = f_emlrt_marshallIn(sp, emlrtAlias(u), parentId);
   emlrtDestroyArray(&u);
   return y;
 }
@@ -61,7 +104,7 @@ static real_T (*b_emlrt_marshallIn(const emlrtStack *sp, const mxArray *u,
  *                const emlrtMsgIdentifier *msgId
  * Return Type  : real_T (*)[5]
  */
-static real_T (*c_emlrt_marshallIn(const emlrtStack *sp, const mxArray *src,
+static real_T (*e_emlrt_marshallIn(const emlrtStack *sp, const mxArray *src,
                                    const emlrtMsgIdentifier *msgId))[5]
 {
   static const int32_T dims[2] = {1, 5};
@@ -111,11 +154,29 @@ static const mxArray *emlrt_marshallOut(const real_T u[3])
 }
 
 /*
- * Arguments    : const mxArray *prhs
+ * Arguments    : const emlrtStack *sp
+ *                const mxArray *src
+ *                const emlrtMsgIdentifier *msgId
+ * Return Type  : real_T
+ */
+static real_T f_emlrt_marshallIn(const emlrtStack *sp, const mxArray *src,
+                                 const emlrtMsgIdentifier *msgId)
+{
+  static const int32_T dims = 0;
+  real_T ret;
+  emlrtCheckBuiltInR2012b((emlrtCTX)sp, msgId, src, (const char_T *)"double",
+                          false, 0U, (void *)&dims);
+  ret = *(real_T *)emlrtMxGetData(src);
+  emlrtDestroyArray(&src);
+  return ret;
+}
+
+/*
+ * Arguments    : const mxArray * const prhs[2]
  *                const mxArray **plhs
  * Return Type  : void
  */
-void FPK_api(const mxArray *prhs, const mxArray **plhs)
+void FPK_api(const mxArray *const prhs[2], const mxArray **plhs)
 {
   emlrtStack st = {
       NULL, /* site */
@@ -124,12 +185,14 @@ void FPK_api(const mxArray *prhs, const mxArray **plhs)
   };
   real_T(*q)[5];
   real_T(*Pne)[3];
+  real_T l3;
   st.tls = emlrtRootTLSGlobal;
   Pne = (real_T(*)[3])mxMalloc(sizeof(real_T[3]));
   /* Marshall function inputs */
-  q = emlrt_marshallIn(&st, emlrtAlias(prhs), "q");
+  q = emlrt_marshallIn(&st, emlrtAlias(prhs[0]), "q");
+  l3 = c_emlrt_marshallIn(&st, emlrtAliasP(prhs[1]), "l3");
   /* Invoke the target function */
-  FPK(*q, *Pne);
+  FPK(*q, l3, *Pne);
   /* Marshall function outputs */
   *plhs = emlrt_marshallOut(*Pne);
 }

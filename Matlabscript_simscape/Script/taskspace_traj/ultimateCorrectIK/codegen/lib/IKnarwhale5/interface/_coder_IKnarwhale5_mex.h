@@ -5,7 +5,7 @@
  * File: _coder_IKnarwhale5_mex.h
  *
  * MATLAB Coder version            : 5.3
- * C/C++ source code generated on  : 09-Feb-2022 19:42:20
+ * C/C++ source code generated on  : 21-Feb-2022 17:08:41
  */
 
 #ifndef _CODER_IKNARWHALE5_MEX_H
@@ -27,7 +27,7 @@ MEXFUNCTION_LINKAGE void mexFunction(int32_T nlhs, mxArray *plhs[],
 emlrtCTX mexFunctionCreateRootTLS(void);
 
 void unsafe_IKnarwhale5_mexFunction(int32_T nlhs, mxArray *plhs[1],
-                                    int32_T nrhs, const mxArray *prhs[2]);
+                                    int32_T nrhs, const mxArray *prhs[3]);
 
 #ifdef __cplusplus
 }

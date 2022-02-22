@@ -5,7 +5,7 @@
  * File: IKnarwhale5.c
  *
  * MATLAB Coder version            : 5.3
- * C/C++ source code generated on  : 09-Feb-2022 19:42:20
+ * C/C++ source code generated on  : 21-Feb-2022 17:08:41
  */
 
 /* Include Files */
@@ -60,24 +60,28 @@ static double rt_atan2d_snf(double u0, double u1)
 /*
  * Arguments    : const double chi[4]
  *                const double gammabar[3]
+ *                double l3
  *                double qbar[5]
  * Return Type  : void
  */
-void IKnarwhale5(const double chi[4], const double gammabar[3], double qbar[5])
+void IKnarwhale5(const double chi[4], const double gammabar[3], double l3,
+                 double qbar[5])
 {
   double c2;
   double q2;
   double q3;
   double s2;
   double x24;
+  double z24;
   /*  RRIK */
+  z24 = (chi[2] + l3) - 295.89;
   x24 = gammabar[1] * sqrt(chi[0] * chi[0] + chi[1] * chi[1]) - 20.0;
-  c2 = x24 * x24 + ((chi[2] + 268.23) - 295.89) * ((chi[2] + 268.23) - 295.89);
+  c2 = x24 * x24 + z24 * z24;
   s2 = sqrt(c2);
   if ((s2 <= 760.0) && (s2 >= 0.0)) {
     c2 = ((c2 - 144400.0) - 144400.0) / 288800.0;
     s2 = gammabar[2] * sqrt(1.0 - c2 * c2);
-    q2 = (rt_atan2d_snf((chi[2] + 268.23) - 295.89, x24) -
+    q2 = (rt_atan2d_snf(z24, x24) -
           rt_atan2d_snf(380.0 * s2, 380.0 * c2 + 380.0)) -
          1.5707963267948966;
     q3 = rt_atan2d_snf(s2, c2) + 1.5707963267948966;

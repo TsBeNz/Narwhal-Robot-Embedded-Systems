@@ -5,7 +5,7 @@
  * File: _coder_FPK_mex.h
  *
  * MATLAB Coder version            : 5.3
- * C/C++ source code generated on  : 13-Feb-2022 15:02:06
+ * C/C++ source code generated on  : 21-Feb-2022 17:01:06
  */
 
 #ifndef _CODER_FPK_MEX_H
@@ -27,7 +27,7 @@ MEXFUNCTION_LINKAGE void mexFunction(int32_T nlhs, mxArray *plhs[],
 emlrtCTX mexFunctionCreateRootTLS(void);
 
 void unsafe_FPK_mexFunction(int32_T nlhs, mxArray *plhs[1], int32_T nrhs,
-                            const mxArray *prhs[1]);
+                            const mxArray *prhs[2]);
 
 #ifdef __cplusplus
 }

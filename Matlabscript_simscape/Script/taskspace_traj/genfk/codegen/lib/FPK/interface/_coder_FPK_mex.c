@@ -5,7 +5,7 @@
  * File: _coder_FPK_mex.c
  *
  * MATLAB Coder version            : 5.3
- * C/C++ source code generated on  : 13-Feb-2022 15:02:06
+ * C/C++ source code generated on  : 21-Feb-2022 17:01:06
  */
 
 /* Include Files */
@@ -47,11 +47,11 @@ emlrtCTX mexFunctionCreateRootTLS(void)
  * Arguments    : int32_T nlhs
  *                mxArray *plhs[1]
  *                int32_T nrhs
- *                const mxArray *prhs[1]
+ *                const mxArray *prhs[2]
  * Return Type  : void
  */
 void unsafe_FPK_mexFunction(int32_T nlhs, mxArray *plhs[1], int32_T nrhs,
-                            const mxArray *prhs[1])
+                            const mxArray *prhs[2])
 {
   emlrtStack st = {
       NULL, /* site */
@@ -61,8 +61,8 @@ void unsafe_FPK_mexFunction(int32_T nlhs, mxArray *plhs[1], int32_T nrhs,
   const mxArray *outputs;
   st.tls = emlrtRootTLSGlobal;
   /* Check for proper number of arguments. */
-  if (nrhs != 1) {
-    emlrtErrMsgIdAndTxt(&st, "EMLRT:runTime:WrongNumberOfInputs", 5, 12, 1, 4,
+  if (nrhs != 2) {
+    emlrtErrMsgIdAndTxt(&st, "EMLRT:runTime:WrongNumberOfInputs", 5, 12, 2, 4,
                         3, "FPK");
   }
   if (nlhs > 1) {
@@ -70,7 +70,7 @@ void unsafe_FPK_mexFunction(int32_T nlhs, mxArray *plhs[1], int32_T nrhs,
                         "FPK");
   }
   /* Call the function. */
-  FPK_api(prhs[0], &outputs);
+  FPK_api(prhs, &outputs);
   /* Copy over outputs to the caller. */
   emlrtReturnArrays(1, &plhs[0], &outputs);
 }

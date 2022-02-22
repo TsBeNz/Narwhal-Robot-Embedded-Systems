@@ -1,2 +1,3 @@
 q = [0 0 0 0 0]
-Pne =FPK(q)
+l3= 269;
+Pne =FPK(q,l3)

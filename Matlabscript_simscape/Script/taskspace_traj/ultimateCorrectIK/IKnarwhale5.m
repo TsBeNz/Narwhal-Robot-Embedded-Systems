@@ -1,9 +1,8 @@
-function [qbar] = IKnarwhale5(chi,gammabar)
+function [qbar] = IKnarwhale5(chi,gammabar,l3)
 h1 = 295.89;
 h2 = 380.00;
 l1 = 20;
 l2 = 380.00;
-l3= 268.23;
 q1 = atan2(gammabar(1)*chi(2),gammabar(1)*chi(1));
 % RRIK
 r = gammabar(2)*sqrt(chi(1)^2 + chi(2)^2);

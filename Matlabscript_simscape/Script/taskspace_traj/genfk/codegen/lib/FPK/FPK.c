@@ -5,7 +5,7 @@
  * File: FPK.c
  *
  * MATLAB Coder version            : 5.3
- * C/C++ source code generated on  : 13-Feb-2022 15:02:06
+ * C/C++ source code generated on  : 21-Feb-2022 17:01:06
  */
 
 /* Include Files */
@@ -15,10 +15,11 @@
 /* Function Definitions */
 /*
  * Arguments    : const double q[5]
+ *                double l3
  *                double Pne[3]
  * Return Type  : void
  */
-void FPK(const double q[5], double Pne[3])
+void FPK(const double q[5], double l3, double Pne[3])
 {
   double Pne_tmp;
   double b_Pne_tmp;
@@ -39,25 +40,24 @@ void FPK(const double q[5], double Pne[3])
   h_Pne_tmp = sin(q[3]);
   Pne[0] = ((380.0 * (Pne_tmp * e_Pne_tmp * c_Pne_tmp -
                       Pne_tmp * d_Pne_tmp * b_Pne_tmp) +
-             268.23 * (g_Pne_tmp * (cos(q[0]) * cos(q[1]) * b_Pne_tmp +
-                                    Pne_tmp * c_Pne_tmp * d_Pne_tmp) +
-                       h_Pne_tmp * (cos(q[0]) * cos(q[1]) * cos(q[2]) -
-                                    cos(q[0]) * sin(q[1]) * sin(q[2])))) +
+             l3 * (g_Pne_tmp * (cos(q[0]) * cos(q[1]) * b_Pne_tmp +
+                                Pne_tmp * c_Pne_tmp * d_Pne_tmp) +
+                   h_Pne_tmp * (cos(q[0]) * cos(q[1]) * cos(q[2]) -
+                                cos(q[0]) * sin(q[1]) * sin(q[2])))) +
             20.0 * Pne_tmp) -
            380.0 * Pne_tmp * d_Pne_tmp;
-  Pne[1] = ((268.23 * (g_Pne_tmp * (e_Pne_tmp * f_Pne_tmp * b_Pne_tmp +
-                                    c_Pne_tmp * f_Pne_tmp * d_Pne_tmp) -
-                       h_Pne_tmp * (f_Pne_tmp * d_Pne_tmp * b_Pne_tmp -
-                                    e_Pne_tmp * c_Pne_tmp * f_Pne_tmp)) -
+  Pne[1] = ((l3 * (g_Pne_tmp * (e_Pne_tmp * f_Pne_tmp * b_Pne_tmp +
+                                c_Pne_tmp * f_Pne_tmp * d_Pne_tmp) -
+                   h_Pne_tmp * (f_Pne_tmp * d_Pne_tmp * b_Pne_tmp -
+                                e_Pne_tmp * c_Pne_tmp * f_Pne_tmp)) -
              380.0 * (sin(q[0]) * sin(q[1]) * sin(q[2]) -
                       cos(q[1]) * cos(q[2]) * sin(q[0]))) +
             20.0 * f_Pne_tmp) -
            380.0 * f_Pne_tmp * d_Pne_tmp;
-  Pne[2] =
-      ((380.0 * (e_Pne_tmp * b_Pne_tmp + c_Pne_tmp * d_Pne_tmp) + 295.89) +
-       380.0 * e_Pne_tmp) -
-      268.23 * (g_Pne_tmp * (cos(q[1]) * cos(q[2]) - d_Pne_tmp * b_Pne_tmp) -
-                h_Pne_tmp * (cos(q[1]) * sin(q[2]) + cos(q[2]) * sin(q[1])));
+  Pne[2] = ((380.0 * (e_Pne_tmp * b_Pne_tmp + c_Pne_tmp * d_Pne_tmp) + 295.89) +
+            380.0 * e_Pne_tmp) -
+           l3 * (g_Pne_tmp * (cos(q[1]) * cos(q[2]) - d_Pne_tmp * b_Pne_tmp) -
+                 h_Pne_tmp * (cos(q[1]) * sin(q[2]) + cos(q[2]) * sin(q[1])));
 }
 
 /*

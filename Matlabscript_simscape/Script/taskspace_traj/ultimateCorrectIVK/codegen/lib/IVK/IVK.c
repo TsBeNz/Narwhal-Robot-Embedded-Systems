@@ -5,7 +5,7 @@
  * File: IVK.c
  *
  * MATLAB Coder version            : 5.3
- * C/C++ source code generated on  : 12-Feb-2022 21:30:07
+ * C/C++ source code generated on  : 21-Feb-2022 17:10:32
  */
 
 /* Include Files */
@@ -15,11 +15,6 @@
 /* Function Definitions */
 /*
  * q,qv5,chi_dot  % q,taskspace
- *  h1= 275.99/1000;
- *  h2= 380;
- *  l1= 20;
- *  l2= 380;
- *  l3= 268.23/1000;
  *
  * Arguments    : const double q[5]
  *                double qv5
@@ -39,8 +34,6 @@ void IVK(const double q[5], double qv5, const double chi_dot[3], double qv[5])
   int r1;
   int r2;
   int rtemp;
-  /*  h1 = 295.89; */
-  /*  l3= 268.23; */
   qvbar_idx_1 = q[1] + q[2];
   qvbar_idx_2 = sin(qvbar_idx_1);
   Jv4_tmp = cos(q[0]);

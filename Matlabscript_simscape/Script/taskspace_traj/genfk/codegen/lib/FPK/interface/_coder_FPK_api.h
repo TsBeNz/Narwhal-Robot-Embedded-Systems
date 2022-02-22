@@ -5,7 +5,7 @@
  * File: _coder_FPK_api.h
  *
  * MATLAB Coder version            : 5.3
- * C/C++ source code generated on  : 13-Feb-2022 15:02:06
+ * C/C++ source code generated on  : 21-Feb-2022 17:01:06
  */
 
 #ifndef _CODER_FPK_API_H
@@ -25,9 +25,9 @@ extern "C" {
 #endif
 
 /* Function Declarations */
-void FPK(real_T q[5], real_T Pne[3]);
+void FPK(real_T q[5], real_T l3, real_T Pne[3]);
 
-void FPK_api(const mxArray *prhs, const mxArray **plhs);
+void FPK_api(const mxArray *const prhs[2], const mxArray **plhs);
 
 void FPK_atexit(void);
 

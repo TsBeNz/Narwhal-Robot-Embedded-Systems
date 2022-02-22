@@ -5,7 +5,7 @@
  * File: main.c
  *
  * MATLAB Coder version            : 5.3
- * C/C++ source code generated on  : 09-Feb-2022 19:42:20
+ * C/C++ source code generated on  : 21-Feb-2022 17:08:41
  */
 
 /*************************************************************************/
@@ -103,7 +103,7 @@ static void main_IKnarwhale5(void)
   /* Call the entry-point 'IKnarwhale5'. */
   argInit_1x4_real_T(dv);
   argInit_1x3_real_T(dv1);
-  IKnarwhale5(dv, dv1, qbar);
+  IKnarwhale5(dv, dv1, argInit_real_T(), qbar);
 }
 
 /*

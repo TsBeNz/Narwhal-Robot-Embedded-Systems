@@ -5,7 +5,7 @@
  * File: main.c
  *
  * MATLAB Coder version            : 5.3
- * C/C++ source code generated on  : 13-Feb-2022 15:02:06
+ * C/C++ source code generated on  : 21-Feb-2022 17:01:06
  */
 
 /*************************************************************************/
@@ -82,7 +82,7 @@ static void main_FPK(void)
   /* Initialize function input argument 'q'. */
   /* Call the entry-point 'FPK'. */
   argInit_1x5_real_T(dv);
-  FPK(dv, Pne);
+  FPK(dv, argInit_real_T(), Pne);
 }
 
 /*

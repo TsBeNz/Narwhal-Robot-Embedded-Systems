@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.coder" plugin-version="R2021a">
-  <configuration build-checksum="1117153359" file="C:\Users\matas\Documents\GitHub\Module89-Frab5-G3\Matlabscript_simscape\Script\taskspace_traj\genfk\FPK.prj" location="C:\Users\matas\Documents\GitHub\Module89-Frab5-G3\Matlabscript_simscape\Script\taskspace_traj\genfk" name="FPK" target="target.unifiedcoder" target-name="MATLAB Coder">
+  <configuration build-checksum="3342980905" file="C:\Users\matas\Documents\GitHub\Module89-Frab5-G3\Matlabscript_simscape\Script\taskspace_traj\genfk\FPK.prj" location="C:\Users\matas\Documents\GitHub\Module89-Frab5-G3\Matlabscript_simscape\Script\taskspace_traj\genfk" name="FPK" target="target.unifiedcoder" target-name="MATLAB Coder">
     <profile key="profile.mex">
       <param.BuiltInstrumentedMex>false</param.BuiltInstrumentedMex>
       <param.RanInstrumentedMex>false</param.RanInstrumentedMex>
@@ -930,7 +930,7 @@
     <param.AutoInferUnboundedSizeThreshold>2048</param.AutoInferUnboundedSizeThreshold>
     <param.EnableFixedPointStep>false</param.EnableFixedPointStep>
     <param.EnableScreener>true</param.EnableScreener>
-    <param.AnnotationChecksum>2109831562</param.AnnotationChecksum>
+    <param.AnnotationChecksum>3501874668</param.AnnotationChecksum>
     <var.LegacyTarget />
     <var.MirrorOnOpen>false</var.MirrorOnOpen>
     <param.FixedPointEnabled>false</param.FixedPointEnabled>
@@ -939,12 +939,12 @@
     <param.unifiedParamStorage />
     <var.gc.lastOutputRoot>codegen\lib\FPK</var.gc.lastOutputRoot>
     <var.gc.lastOutputType>C_CODE</var.gc.lastOutputType>
-    <var.gc.preBuildChecksum>1452046816</var.gc.preBuildChecksum>
+    <var.gc.preBuildChecksum>3546007174</var.gc.preBuildChecksum>
     <var.cfi.lastOutputRoot>codegen\mex\FPK</var.cfi.lastOutputRoot>
-    <var.cfi.preBuildChecksum>3897219327</var.cfi.preBuildChecksum>
+    <var.cfi.preBuildChecksum>1839032217</var.cfi.preBuildChecksum>
     <var.lastCfiTestSnippet>testfpk</var.lastCfiTestSnippet>
     <var.outdatedOnRestore>false</var.outdatedOnRestore>
-    <var.lastUserSourceChecksum>&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;&lt;checksum&gt;&lt;includedFiles&gt;&lt;file&gt;C:\Users\matas\Documents\GitHub\Module89-Frab5-G3\Matlabscript_simscape\Script\taskspace_traj\genfk\FPK.m&lt;/file&gt;&lt;/includedFiles&gt;&lt;value&gt;1698702271&lt;/value&gt;&lt;/checksum&gt;</var.lastUserSourceChecksum>
+    <var.lastUserSourceChecksum>&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;&lt;checksum&gt;&lt;includedFiles&gt;&lt;file&gt;C:\Users\matas\Documents\GitHub\Module89-Frab5-G3\Matlabscript_simscape\Script\taskspace_traj\genfk\FPK.m&lt;/file&gt;&lt;/includedFiles&gt;&lt;value&gt;2087750154&lt;/value&gt;&lt;/checksum&gt;</var.lastUserSourceChecksum>
     <var.sourceSetState>&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;&lt;sourceModel&gt;&lt;primarySourceFiles&gt;&lt;file&gt;C:\Users\matas\Documents\GitHub\Module89-Frab5-G3\Matlabscript_simscape\Script\taskspace_traj\genfk\FPK.m&lt;/file&gt;&lt;/primarySourceFiles&gt;&lt;fixedPointSourceFiles/&gt;&lt;fixedPointSourceRegistered&gt;false&lt;/fixedPointSourceRegistered&gt;&lt;fixedPointSourceSelected&gt;false&lt;/fixedPointSourceSelected&gt;&lt;/sourceModel&gt;</var.sourceSetState>
     <param.forceMexBuild>false</param.forceMexBuild>
     <param.NoDefaultJIT>false</param.NoDefaultJIT>
@@ -1167,7 +1167,7 @@
     </unset>
     <fileset.entrypoints>
       <file custom-data-expanded="false" value="${PROJECT_ROOT}\FPK.m">
-        <Marker>1644739237351</Marker>
+        <Marker>1645437574439</Marker>
       </file>
     </fileset.entrypoints>
     <fileset.testbench>
@@ -1177,10 +1177,20 @@
       <file custom-data-expanded="false" value="${PROJECT_ROOT}\FPK.m">
         <Inputs fileName="FPK.m" functionName="FPK">
           <Input Name="q" typeId="0" />
+          <Input Name="l3" typeId="1" />
           <idpTable>
             <type typeId="0">
               <Class>double</Class>
               <Size>1 x 5</Size>
+              <Value />
+              <InitialValue />
+              <UserDefined>false</UserDefined>
+              <Complex>false</Complex>
+              <Sparse>false</Sparse>
+            </type>
+            <type typeId="1">
+              <Class>double</Class>
+              <Size>1 x 1</Size>
               <Value />
               <InitialValue />
               <UserDefined>false</UserDefined>
