@@ -5,7 +5,7 @@
  * File: IKnarwhale5.h
  *
  * MATLAB Coder version            : 5.3
- * C/C++ source code generated on  : 09-Feb-2022 19:42:20
+ * C/C++ source code generated on  : 21-Feb-2022 17:08:41
  */
 
 #ifndef IKNARWHALE5_H
@@ -22,7 +22,7 @@ extern "C" {
 
 /* Function Declarations */
 extern void IKnarwhale5(const double chi[4], const double gammabar[3],
-                        double qbar[5]);
+                        double l3, double qbar[5]);
 
 #ifdef __cplusplus
 }

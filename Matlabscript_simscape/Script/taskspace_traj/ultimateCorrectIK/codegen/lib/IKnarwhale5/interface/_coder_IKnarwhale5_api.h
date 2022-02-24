@@ -5,7 +5,7 @@
  * File: _coder_IKnarwhale5_api.h
  *
  * MATLAB Coder version            : 5.3
- * C/C++ source code generated on  : 09-Feb-2022 19:42:20
+ * C/C++ source code generated on  : 21-Feb-2022 17:08:41
  */
 
 #ifndef _CODER_IKNARWHALE5_API_H
@@ -25,9 +25,9 @@ extern "C" {
 #endif
 
 /* Function Declarations */
-void IKnarwhale5(real_T chi[4], real_T gammabar[3], real_T qbar[5]);
+void IKnarwhale5(real_T chi[4], real_T gammabar[3], real_T l3, real_T qbar[5]);
 
-void IKnarwhale5_api(const mxArray *const prhs[2], const mxArray **plhs);
+void IKnarwhale5_api(const mxArray *const prhs[3], const mxArray **plhs);
 
 void IKnarwhale5_atexit(void);
 

@@ -5,7 +5,7 @@
  * File: _coder_IKnarwhale5_mex.c
  *
  * MATLAB Coder version            : 5.3
- * C/C++ source code generated on  : 09-Feb-2022 19:42:20
+ * C/C++ source code generated on  : 21-Feb-2022 17:08:41
  */
 
 /* Include Files */
@@ -47,11 +47,11 @@ emlrtCTX mexFunctionCreateRootTLS(void)
  * Arguments    : int32_T nlhs
  *                mxArray *plhs[1]
  *                int32_T nrhs
- *                const mxArray *prhs[2]
+ *                const mxArray *prhs[3]
  * Return Type  : void
  */
 void unsafe_IKnarwhale5_mexFunction(int32_T nlhs, mxArray *plhs[1],
-                                    int32_T nrhs, const mxArray *prhs[2])
+                                    int32_T nrhs, const mxArray *prhs[3])
 {
   emlrtStack st = {
       NULL, /* site */
@@ -61,8 +61,8 @@ void unsafe_IKnarwhale5_mexFunction(int32_T nlhs, mxArray *plhs[1],
   const mxArray *outputs;
   st.tls = emlrtRootTLSGlobal;
   /* Check for proper number of arguments. */
-  if (nrhs != 2) {
-    emlrtErrMsgIdAndTxt(&st, "EMLRT:runTime:WrongNumberOfInputs", 5, 12, 2, 4,
+  if (nrhs != 3) {
+    emlrtErrMsgIdAndTxt(&st, "EMLRT:runTime:WrongNumberOfInputs", 5, 12, 3, 4,
                         11, "IKnarwhale5");
   }
   if (nlhs > 1) {
