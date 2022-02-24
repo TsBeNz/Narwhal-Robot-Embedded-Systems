@@ -8,7 +8,17 @@
 
 #include "kinematics.h"
 
-Kinematics_StatusTypeDef IKnarwhale(float gammabar[3], float chi[4], float q[5]) {
+
+/**************** Input *********************
+ *
+ * gammabar[3]		<--- Robot Pos [1,1,-1]
+ * Chi[3]			<--- TaskSpace Position [x,y,z]
+ *
+ **************** Output ********************
+ * q[4]				---> JointSpace Position
+ *
+ */
+Kinematics_StatusTypeDef IKnarwhale(float gammabar[3], float chi[3], float q[4]) {
 	float c2;
 	float q2;
 	float q3;
@@ -28,36 +38,85 @@ Kinematics_StatusTypeDef IKnarwhale(float gammabar[3], float chi[4], float q[5])
 		q[1] = q2;
 		q[2] = q3;
 		q[3] = -q2 - q3;
-		q[4] = chi[3];
 		return Kinematics_OK;
 	} else {
 		return Error_Link_length;
 	}
 }
 
-void IVK(float v_x, float v_y, float v_z, float v_pitch, float v_yaw, float *q,	float *qv) {
-	float c1 = cos(*q);
-	float s1 = sin(*q);
-	float c2 = cos(*(q + 1));
-	float s2 = sin(*(q + 1));
-	float c23 = cos(*(q + 1) + *(q + 2));
-	float s23 = sin(*(q + 1) + *(q + 2));
-	float c234 = cos(*(q + 1) + *(q + 2) + *(q + 3));
-	float s234 = sin(*(q + 1) + *(q + 2) + *(q + 3));
-	float l2c23 = 380.0f * c23;
-	float l2s23 = 380.0f * s23;
-	float l3c234 = 235.0f * c234;
-	float l3s234 = 235.0f * s234;
-	*qv = -v_y - v_z - v_pitch;
-	*(qv + 1) = v_yaw;
-	*(qv + 2) = v_pitch * l3c234 * c1
-			- v_y * (c1 * (l2s23 + 380.0f * c2) - l3c234 * c1)
-			- v_z * c1 * (l2s23 - l3c234)
-			- v_x * (s1 * (20.01f + l2c23 - 380.0f * s2) + l3s234 * s1);
-	*(qv + 3) = v_x * (c1 * (20.01f + l2c23 - 380.0f * s2) + l3s234 * c1)
-			- v_y * (s1 * (l2s23 + 380.0f * c2) - l3c234 * s1)
-			- v_z * s1 * (l2s23 - l3c234) + v_pitch * l3c234 * s1;
-	*(qv + 4) = v_y * (l2c23 - 380.0f * s2 + l3s234) + v_z * (l2c23 + l3s234)
-			+ (v_pitch * l3s234);
-}
 
+
+/************* Input *****************
+ *
+ * q[3]		<---	Joint Configuration (J. 1-3)
+ * chi_dot	<---	TaskSpace Velocity 	(x,y,z)
+ *
+ ************** Output ****************
+ *
+ * qv[4]	--->	Joint Velocity 		(J. 1-4)
+ *
+ */
+Kinematics_StatusTypeDef IVK(float q[3], float chi_dot[3], float qv[4])
+{
+  float Jv4[9];
+  float Jv4_tmp;
+  float Jv4_tmp_tmp;
+  float b_Jv4_tmp;
+  float c_Jv4_tmp;
+  float qvbar_idx_1;
+  float qvbar_idx_2;
+  int r1;
+  int r2;
+  int rtemp;
+  /*  h1 = 295.89; */
+  /*  l3= 268.23; */
+  qvbar_idx_1 = q[1] + q[2];
+  qvbar_idx_2 = sin(qvbar_idx_1);
+  Jv4_tmp = cos(q[0]);
+  b_Jv4_tmp = sin(q[0]);
+  qvbar_idx_1 = 380.0 * cos(qvbar_idx_1);
+  Jv4_tmp_tmp = 380.0 * sin(q[1]);
+  c_Jv4_tmp = (qvbar_idx_1 + 20.0) - Jv4_tmp_tmp;
+  Jv4[0] = -b_Jv4_tmp * c_Jv4_tmp;
+  Jv4[3] = -Jv4_tmp * (380.0 * qvbar_idx_2 + 380.0 * cos(q[1]));
+  Jv4[6] = -380.0 * qvbar_idx_2 * Jv4_tmp;
+  Jv4[1] = Jv4_tmp * c_Jv4_tmp;
+  Jv4[4] = -sin(q[0]) * (380.0 * sin(q[1] + q[2]) + 380.0 * cos(q[1]));
+  Jv4[7] = -380.0 * sin(q[1] + q[2]) * b_Jv4_tmp;
+  Jv4[2] = 0.0;
+  Jv4[5] = qvbar_idx_1 - Jv4_tmp_tmp;
+  Jv4[8] = qvbar_idx_1;
+  r1 = 0;
+  r2 = 1;
+  rtemp = 2;
+  if (fabs(Jv4[1]) > fabs(Jv4[0])) {
+    r1 = 1;
+    r2 = 0;
+  }
+  Jv4[r2] /= Jv4[r1];
+  Jv4[2] = 0.0 / Jv4[r1];
+  Jv4[r2 + 3] -= Jv4[r2] * Jv4[r1 + 3];
+  Jv4[5] -= Jv4[2] * Jv4[r1 + 3];
+  Jv4[r2 + 6] -= Jv4[r2] * Jv4[r1 + 6];
+  Jv4[8] -= Jv4[2] * Jv4[r1 + 6];
+  if (fabs(Jv4[5]) > fabs(Jv4[r2 + 3])) {
+    rtemp = r2;
+    r2 = 2;
+  }
+  Jv4[rtemp + 3] /= Jv4[r2 + 3];
+  Jv4[rtemp + 6] -= Jv4[rtemp + 3] * Jv4[r2 + 6];
+  qvbar_idx_1 = chi_dot[r2] - chi_dot[r1] * Jv4[r2];
+  qvbar_idx_2 = ((chi_dot[rtemp] - chi_dot[r1] * Jv4[rtemp]) -
+                 qvbar_idx_1 * Jv4[rtemp + 3]) /
+                Jv4[rtemp + 6];
+  qvbar_idx_1 -= qvbar_idx_2 * Jv4[r2 + 6];
+  qvbar_idx_1 /= Jv4[r2 + 3];
+  qv[0] =
+      ((chi_dot[r1] - qvbar_idx_2 * Jv4[r1 + 6]) - qvbar_idx_1 * Jv4[r1 + 3]) /
+      Jv4[r1];
+  qv[1] = qvbar_idx_1;
+  qv[2] = qvbar_idx_2;
+  qv[3] = -qvbar_idx_1 - qvbar_idx_2;
+  return Kinematics_OK;
+//  qv[4] = qv5;
+}

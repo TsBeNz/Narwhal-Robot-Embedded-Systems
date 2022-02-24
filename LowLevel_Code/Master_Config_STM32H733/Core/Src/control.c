@@ -30,6 +30,8 @@ void Step_Driver_init(SteperParameter *step, TIM_HandleTypeDef *htim,
 	step->f_timer = f_timer;
 	step->DIR_init = DIR_init;
 	HAL_TIM_PWM_Start(step->htim, step->Channel);
+	step->htim->Instance->ARR = 500;
+	step->htim->Instance->CCR1 = 0;
 }
 
 
@@ -37,11 +39,11 @@ void Step_Driver(SteperParameter *step, float f_driver) {
 	float abs_f_driver = fabs(f_driver);
 	uint16_t reg_out;
 	if (abs_f_driver <= 5) {
-		reg_out = 10000;
-		step->htim->Instance->ARR = 0;
+		reg_out = 20000;
+		step->htim->Instance->ARR = 20000;
 		step->htim->Instance->CCR1 = 0;
-	} else if (abs_f_driver < 50) {
-		reg_out = 10000;
+	} else if (abs_f_driver < 25) {
+		reg_out = 20000;
 		step->htim->Instance->ARR = reg_out;
 		step->htim->Instance->CCR1 = reg_out >> 1;
 	} else {
@@ -56,30 +58,44 @@ void Step_Driver(SteperParameter *step, float f_driver) {
 	}
 }
 
-void Traj_Coeff_Cal(TrajParameter *Traj, float T, float Pos_Final,
-		float Pos_Now, float Vel_Now) {
-	float T_P2 = T * T;
-	float T_P3 = T_P2 * T;
-	float T_P4 = T_P3 * T;
-	float T_P5 = T_P4 * T;
-	float ds = Pos_Now - Pos_Final;
-	float tfv0 = T * Vel_Now;
-	Traj->TrajCoef[0] = Pos_Now;
-	Traj->TrajCoef[1] = Vel_Now;
-	Traj->TrajCoef[3] = -(2 * (5 * ds + 3 * tfv0)) / T_P3;
-	Traj->TrajCoef[4] = (15 * ds + 8 * tfv0) / T_P4;
-	Traj->TrajCoef[5] = -(3 * (2 * ds + tfv0)) / T_P5;
-}
-
-void TrajFollow(TrajParameter *Traj, float traj_t[5], float *Position,
-		float *Velocity) {
-	*Position = Traj->TrajCoef[0] + (Traj->TrajCoef[1] * traj_t[0])
-			+ (Traj->TrajCoef[3] * traj_t[2]) + (Traj->TrajCoef[4] * traj_t[3])
-			+ (Traj->TrajCoef[5] * traj_t[4]);
-	*Velocity = Traj->TrajCoef[1] + (3 * Traj->TrajCoef[3] * traj_t[1])
-			+ (4 * Traj->TrajCoef[4] * traj_t[3])
-			+ (5 * Traj->TrajCoef[5] * traj_t[3]);
-}
+//void Traj_Coeff_Cal(TrajParameter *Traj, float T, float Pos_Final,
+//		float Pos_Now, float Vel_Now) {
+//	float T_P2 = T * T;
+//	float T_P3 = T_P2 * T;
+//	float T_P4 = T_P3 * T;
+//	float T_P5 = T_P4 * T;
+//	float ds = Pos_Now - Pos_Final;
+//	float tfv0 = T * Vel_Now;
+//	Traj->TrajCoef[0] = Pos_Now;
+//	Traj->TrajCoef[1] = Vel_Now;
+//	Traj->TrajCoef[3] = -(2 * (5 * ds + 3 * tfv0)) / T_P3;
+//	Traj->TrajCoef[4] = (15 * ds + 8 * tfv0) / T_P4;
+//	Traj->TrajCoef[5] = -(3 * (2 * ds + tfv0)) / T_P5;
+//}
+//
+//void Traj_Coeff_Cal_Ds(TrajParameter *Traj, float T, float ds,
+//		float Pos_Now, float Vel_Now) {
+//	float T_P2 = T * T;
+//	float T_P3 = T_P2 * T;
+//	float T_P4 = T_P3 * T;
+//	float T_P5 = T_P4 * T;
+//	float tfv0 = T * Vel_Now;
+//	Traj->TrajCoef[0] = Pos_Now;
+//	Traj->TrajCoef[1] = Vel_Now;
+//	Traj->TrajCoef[3] = -(2 * (5 * ds + 3 * tfv0)) / T_P3;
+//	Traj->TrajCoef[4] = (15 * ds + 8 * tfv0) / T_P4;
+//	Traj->TrajCoef[5] = -(3 * (2 * ds + tfv0)) / T_P5;
+//}
+//
+//void TrajFollow(TrajParameter *Traj, float traj_t[5], float *Position,
+//		float *Velocity) {
+//	*Position = Traj->TrajCoef[0] + (Traj->TrajCoef[1] * traj_t[0])
+//			+ (Traj->TrajCoef[3] * traj_t[2]) + (Traj->TrajCoef[4] * traj_t[3])
+//			+ (Traj->TrajCoef[5] * traj_t[4]);
+//	*Velocity = Traj->TrajCoef[1] + (3 * Traj->TrajCoef[3] * traj_t[1])
+//			+ (4 * Traj->TrajCoef[4] * traj_t[3])
+//			+ (5 * Traj->TrajCoef[5] * traj_t[3]);
+//}
 
 
 /* KalmanFilter Function */

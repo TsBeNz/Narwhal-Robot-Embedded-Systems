@@ -41,7 +41,7 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Core/Inc/adc.h ../Core/Inc/main.h ../Core/Inc/crc.h ../Core/Inc/dma.h \
  ../Core/Inc/i2c.h ../Core/Inc/spi.h ../Core/Inc/tim.h \
  ../Core/Inc/usart.h ../Core/Inc/gpio.h ../Core/Inc/kinematics.h \
- ../Core/Inc/control.h ../Core/Inc/AS5047U.h
+ ../Core/Inc/control.h ../Core/Inc/AS5047U.h ../Core/Inc/Neopixel.h
 
 ../Core/Inc/main.h:
 
@@ -146,3 +146,5 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Core/Inc/control.h:
 
 ../Core/Inc/AS5047U.h:
+
+../Core/Inc/Neopixel.h:

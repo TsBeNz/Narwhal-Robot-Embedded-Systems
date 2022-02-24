@@ -29,14 +29,6 @@ typedef struct {
 	uint8_t DIR_init;
 }SteperParameter;
 
-
-typedef struct {
-	float TrajCoef[6];		/* Trajectory Coefficient */
-	float Last_Pos;
-	float Current_Pos;
-}TrajParameter;
-
-
 /* KalmanFilter Variable */
 typedef struct {
 	float Q; 			// Adjustable
@@ -79,8 +71,6 @@ void Step_Driver_init(SteperParameter *step, TIM_HandleTypeDef *htim, uint32_t C
 void Step_Driver(SteperParameter *step, float f_driver);
 void Kalman_init(KalmanParameter *kalman, double Q, double R);
 void KalmanFilter(KalmanParameter *kalman ,double theta_k);
-void Traj_Coeff_Cal(TrajParameter *Traj, float T, float Pos_Final, float Pos_Now, float Vel_Now);
-void TrajFollow(TrajParameter *Traj, float traj_t[5], float *Position, float *Velocity);
 void PID_init(PIDParameter *PID, float Kp, float Ki, float Kd);
 float PID_Control(PIDParameter *PID,float Setpoint,float Feedback);
 void CascadeControl_init(ControlParameter *Control,float PosP,float PosI,float PosD,float VelP,float VelI,float VelD, float GearRatio ,float StepDriver);

@@ -74,11 +74,12 @@ typedef struct {
 /*
  * Function
  */
-float EncPulse2Rad_Read(AS5047U *Enc);
-void AS5047U_init(AS5047U *dev, SPI_HandleTypeDef *hspiHandle, GPIO_TypeDef *CSGPIOTypedef, CRC_HandleTypeDef *hcrcHandle, uint16_t CSGPIOPin);
+float EncPulse2Rad_Read(AS5047U *Enc,uint8_t inv_dir);
+
+void AS5047U_init(AS5047U *dev, SPI_HandleTypeDef *hspiHandle, GPIO_TypeDef *CSGPIOTypedef, CRC_HandleTypeDef *hcrcHandle, uint16_t CSGPIOPin, float offset);
 void AS5047U_Write(AS5047U *dev,uint16_t Register_Address, uint16_t Data);
 HAL_StatusTypeDef AS5047U_Read(AS5047U *dev,uint16_t Register_Address, uint16_t *Data);
-uint16_t AS5047U_Position_Highspeed_Read(AS5047U *dev);
+uint16_t AS5047U_Position_Highspeed_Read(AS5047U *dev,uint8_t dir);
 int16_t AS5047U_Speed_Highspeed_Read(AS5047U *dev);
 void AS5047U_Read_Error(AS5047U *dev);
 
