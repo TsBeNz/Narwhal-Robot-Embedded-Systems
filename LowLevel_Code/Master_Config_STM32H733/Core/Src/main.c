@@ -58,15 +58,18 @@ KalmanParameter Kalman[4];
 ControlParameter Control[4];
 SteperParameter Stepper[4];
 NeopixelParameter Neopixel;
+TrajParameter Traj[4];
 
-
-float Joint0 = 0;
-float Joint1 = 0;
-float Joint2 = 0;
-float Joint3 = 0;
+float SetPoint_Position[4];
+float SetPoint_Velocity[4];
+float J1,J2,J3,J4;
+float t;
+uint8_t Test_traj = 0;
+float Test_traj_Val[4];
 
 /*   Flag   */
 uint8_t Contorl_Flag;
+uint8_t Traj_Flag;
 uint8_t Protocol_Flag;
 
 /*	Software Timer	*/
@@ -87,6 +90,7 @@ float t,T_Traj;
 
 float pos,vel,dt_test,f_out,position_test;
 uint16_t reg_out;
+float v2freqGain;
 
 
 
@@ -182,7 +186,7 @@ int main(void)
 	HAL_ADCEx_Calibration_Start(&hadc3, ADC_CALIB_OFFSET, ADC_SINGLE_ENDED);
 
 	/*			   Encoder				*/
-	AS5047U_init(&Encoder[0], &hspi3, GPIOD, &hcrc, GPIO_PIN_0,6077);
+	AS5047U_init(&Encoder[0], &hspi3, GPIOD, &hcrc, GPIO_PIN_0,6500);
 	AS5047U_init(&Encoder[1], &hspi3, GPIOD, &hcrc, GPIO_PIN_1,10831);
 	AS5047U_init(&Encoder[2], &hspi3, GPIOD, &hcrc, GPIO_PIN_2,2982);
 	AS5047U_init(&Encoder[3], &hspi3, GPIOD, &hcrc, GPIO_PIN_3,5000);
@@ -194,10 +198,10 @@ int main(void)
 	Kalman_init(&Kalman[3], 5000, 0.001);
 
 	/*			CascadeControl			*/
-	CascadeControl_init(&Control[0], 0.1, 0, 0, 0.1, 0, 0, 4*5.18f, 1600);
-	CascadeControl_init(&Control[1], 0.1, 0, 0, 0.1, 0, 0, 9, 800);
-	CascadeControl_init(&Control[2], 0.1, 0, 0, 0.1, 0, 0, 9, 1600);
-	CascadeControl_init(&Control[3], 0.1, 0, 0, 0.1, 0, 0, 6, 1600);
+	CascadeControl_init(&Control[0], 0.7, 0, 0, 0.1, 0, 0, 4*5.18f, 180);
+	CascadeControl_init(&Control[1], 0.7, 0, 0, 0.1, 0, 0, 9, 80);
+	CascadeControl_init(&Control[2], 0.7, 0, 0, 0.1, 0, 0, 9, 170);
+	CascadeControl_init(&Control[3], 0.7, 0, 0, 0.1, 0, 0, 6, 180);
 
 	/*			Stepper Driver			*/
 	Step_Driver_init(&Stepper[0], &htim13, TIM_CHANNEL_1, GPIOE, GPIO_PIN_0, 500000, 1);
@@ -206,9 +210,23 @@ int main(void)
 	Step_Driver_init(&Stepper[3], &htim16, TIM_CHANNEL_1, GPIOE, GPIO_PIN_3, 500000, 0);
 	/*			Traj		*/
 
+	SetPoint_Position[0] = EncPulse2Rad_Read(&Encoder[0], 1);
+	SetPoint_Position[1] = EncPulse2Rad_Read(&Encoder[1], 0);
+	SetPoint_Position[2] = EncPulse2Rad_Read(&Encoder[2], 0);
+	SetPoint_Position[3] = EncPulse2Rad_Read(&Encoder[3], 0);
+	SetPoint_Velocity[0] = 0;
+	SetPoint_Velocity[1] = 0;
+	SetPoint_Velocity[2] = 0;
+	SetPoint_Velocity[3] = 0;
+	Test_traj_Val[0] = 0;
+	Test_traj_Val[1] = 0;
+	Test_traj_Val[2] = 0;
+	Test_traj_Val[3] = 0;
+
+	Traj_Flag = 0;
+	t = 0;
 
 	HAL_TIM_Base_Start_IT(&htim23);   // Start Control Timer
-
 	HAL_UART_Receive_IT (&huart5, UART5_rxBuffer, 14);
 
   /* USER CODE END 2 */
@@ -220,28 +238,51 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+		if (Test_traj && !Traj_Flag) {
+			t = 0;
+			for (int i = 0; i < 4; i++) {
+				Traj_Coeff_Cal(&Traj[i], 5, Test_traj_Val[i], Control[i].PositionFeedback, 0);
+			}
+			Test_traj = 0;
+			Traj_Flag = 1;
+		}
 		if (Contorl_Flag) {
-//			float Position, Velocity;
-//			Joint_Traj(&Position,&Velocity);
-			float J1,J2,J3,J4;
 			/***** Encoder Read *****/
+
 			J1 = EncPulse2Rad_Read(&Encoder[0],1);
 			J2 = EncPulse2Rad_Read(&Encoder[1],0);
 			J3 = EncPulse2Rad_Read(&Encoder[2],0);
 			J4 = EncPulse2Rad_Read(&Encoder[3],0);
 
-			CascadeControl(&Control[0], &Kalman[0], J1,0,0);
-			CascadeControl(&Control[1], &Kalman[1], J2,0.52,0);
-			CascadeControl(&Control[2], &Kalman[2], J3,-0.52,0);
-			CascadeControl(&Control[3], &Kalman[3], J4,0,0);
+			if(Traj_Flag){
+				float traj_t_set[5];
+				traj_t_set[0] = t;
+				traj_t_set[1] = t * t;
+				traj_t_set[2] = traj_t_set[1] * t;
+				traj_t_set[3] = traj_t_set[2] * t;
+				traj_t_set[4] = traj_t_set[3] * t;
+				for (int i = 0 ;i<4;i++){
+					TrajFollow(&Traj[i], traj_t_set, &SetPoint_Position[i], &SetPoint_Velocity[i]);
+				}
+				t += 0.01;
+				if (t >= Traj[1].T){
+					Traj_Flag = 0;
+				}
+			}
+
+			CascadeControl(&Control[0], &Kalman[0], J1,SetPoint_Position[0],SetPoint_Velocity[0]);
+			CascadeControl(&Control[1], &Kalman[1], J2,SetPoint_Position[1],SetPoint_Velocity[1]);
+			CascadeControl(&Control[2], &Kalman[2], J3,SetPoint_Position[2],SetPoint_Velocity[2]);
+			CascadeControl(&Control[3], &Kalman[3], J4,SetPoint_Position[3],SetPoint_Velocity[3]);
 
 			Step_Driver(&Stepper[0], Control[0].Output);
 			Step_Driver(&Stepper[1], Control[1].Output);
 			Step_Driver(&Stepper[2], Control[2].Output);
-//			Step_Driver(&Stepper[3], Control[3].Output);
+			Step_Driver(&Stepper[3], Control[3].Output);
 
 			Contorl_Flag = 0;    // Clear Control Flag
 		}
+//		Step_Driver(&Stepper[0],25);
 
 		/* Check Error Before Update Path with root mean */
 		/* Before Change Path (Calculate New Traj Via point) */
@@ -265,7 +306,7 @@ int main(void)
 			Protocol_Flag = 0;
 		}
 
-		if (HAL_GetTick() - Software_Timer_100ms >= 100){
+		if (HAL_GetTick() - Software_Timer_100ms >= 10){
 			Software_Timer_100ms = HAL_GetTick();
 //			Neopixel_Set(&Neopixel, 1, 255, 255, 255);
 //			Neopixel_Sent(&Neopixel);
@@ -419,6 +460,24 @@ inline void Narwhal_Protocol() {
 				case 0x05:
 					/* GoHome */
 					Feedback[2] = 0x02;
+//					SetPoint_Position[0] = 0;
+//					SetPoint_Position[1] = 0;
+//					SetPoint_Position[2] = 0;
+//					SetPoint_Position[3] = 0;
+//					SetPoint_Velocity[0] = 0;
+//					SetPoint_Velocity[1] = 0;
+//					SetPoint_Velocity[2] = 0;
+//					SetPoint_Velocity[3] = 0;
+
+					if (!Traj_Flag) {
+						t = 0;
+						for (int i = 0; i < 4; i++) {
+							Traj_Coeff_Cal(&Traj[i], 4, 0,
+									Control[i].PositionFeedback, 0);
+						}
+						Traj_Flag = 1;
+					}
+
 					break;
 				case 0x0A:
 					/* Joint Jog */
@@ -433,7 +492,6 @@ inline void Narwhal_Protocol() {
 //						float T = 0.5;
 //						for (int i = 0; i < 4; i++) {
 //
-//						}
 					}
 					Feedback[2] = 0x03;
 					break;
@@ -498,8 +556,9 @@ inline void Narwhal_Protocol() {
 					/* Raw Joint Encoder Position */
 					Sent[1] = 0xEE;
 					for (int i = 0; i < 4; i++) {
-						Sent[2+i] = (uint8_t) ((Encoder[i].Position >> 8) && 0xFF);
-						Sent[3+i] = (uint8_t) (Encoder[i].Position && 0xFF);
+						Sent[2 + i] = (uint8_t) ((Encoder[i].Position >> 8)
+								&& 0xFF);
+						Sent[3 + i] = (uint8_t) (Encoder[i].Position && 0xFF);
 					}
 					Sent[12] = CRC8(Feedback, 12);
 					HAL_UART_Transmit_IT(&huart5, Sent, 13);
@@ -538,24 +597,24 @@ inline void Narwhal_Protocol() {
 	HAL_UART_Receive_IT(&huart5, UART5_rxBuffer, 14);
 }
 
-void Joint_Traj(float *Position, float *Velocity) {
-	if (!traj_finish) {
-		float traj_t_set[5];
-		traj_t_set[0] = t;
-		traj_t_set[1] = t * t;
-		traj_t_set[2] = traj_t_set[1] * t;
-		traj_t_set[3] = traj_t_set[2] * t;
-		traj_t_set[4] = traj_t_set[3] * t;
-		/*for loop For 4 Join*/
-//		TrajFollow(&Traj[0], traj_t_set, Position, Velocity);
-		/*for loop For 4 Join*/
-		t += delta_t;
-		if (t > T_Traj) {
-			traj_finish = 1;
-			t = 0;
-		}
-	}
-}
+//void Joint_Traj(float *Position, float *Velocity) {
+//	if (!traj_finish) {
+//		float traj_t_set[5];
+//		traj_t_set[0] = t;
+//		traj_t_set[1] = t * t;
+//		traj_t_set[2] = traj_t_set[1] * t;
+//		traj_t_set[3] = traj_t_set[2] * t;
+//		traj_t_set[4] = traj_t_set[3] * t;
+//		/*for loop For 4 Join*/
+//	}
+//		/*for loop For 4 Join*/
+//		t += delta_t;
+//		if (t > T_Traj) {
+//			traj_finish = 1;
+//			t = 0;
+//		}
+//	}
+//}
 
 /* USER CODE END 4 */
 

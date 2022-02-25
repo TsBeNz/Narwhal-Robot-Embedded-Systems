@@ -58,44 +58,45 @@ void Step_Driver(SteperParameter *step, float f_driver) {
 	}
 }
 
-//void Traj_Coeff_Cal(TrajParameter *Traj, float T, float Pos_Final,
-//		float Pos_Now, float Vel_Now) {
-//	float T_P2 = T * T;
-//	float T_P3 = T_P2 * T;
-//	float T_P4 = T_P3 * T;
-//	float T_P5 = T_P4 * T;
-//	float ds = Pos_Now - Pos_Final;
-//	float tfv0 = T * Vel_Now;
-//	Traj->TrajCoef[0] = Pos_Now;
-//	Traj->TrajCoef[1] = Vel_Now;
-//	Traj->TrajCoef[3] = -(2 * (5 * ds + 3 * tfv0)) / T_P3;
-//	Traj->TrajCoef[4] = (15 * ds + 8 * tfv0) / T_P4;
-//	Traj->TrajCoef[5] = -(3 * (2 * ds + tfv0)) / T_P5;
-//}
-//
-//void Traj_Coeff_Cal_Ds(TrajParameter *Traj, float T, float ds,
-//		float Pos_Now, float Vel_Now) {
-//	float T_P2 = T * T;
-//	float T_P3 = T_P2 * T;
-//	float T_P4 = T_P3 * T;
-//	float T_P5 = T_P4 * T;
-//	float tfv0 = T * Vel_Now;
-//	Traj->TrajCoef[0] = Pos_Now;
-//	Traj->TrajCoef[1] = Vel_Now;
-//	Traj->TrajCoef[3] = -(2 * (5 * ds + 3 * tfv0)) / T_P3;
-//	Traj->TrajCoef[4] = (15 * ds + 8 * tfv0) / T_P4;
-//	Traj->TrajCoef[5] = -(3 * (2 * ds + tfv0)) / T_P5;
-//}
-//
-//void TrajFollow(TrajParameter *Traj, float traj_t[5], float *Position,
-//		float *Velocity) {
-//	*Position = Traj->TrajCoef[0] + (Traj->TrajCoef[1] * traj_t[0])
-//			+ (Traj->TrajCoef[3] * traj_t[2]) + (Traj->TrajCoef[4] * traj_t[3])
-//			+ (Traj->TrajCoef[5] * traj_t[4]);
-//	*Velocity = Traj->TrajCoef[1] + (3 * Traj->TrajCoef[3] * traj_t[1])
-//			+ (4 * Traj->TrajCoef[4] * traj_t[3])
-//			+ (5 * Traj->TrajCoef[5] * traj_t[3]);
-//}
+void Traj_Coeff_Cal(TrajParameter *Traj, float T, float Pos_Final,
+		float Pos_Now, float Vel_Now) {
+	Traj->T = T;
+	float T_P2 = T * T;
+	float T_P3 = T_P2 * T;
+	float T_P4 = T_P3 * T;
+	float T_P5 = T_P4 * T;
+	float ds = Pos_Now - Pos_Final;
+	float tfv0 = T * Vel_Now;
+	Traj->TrajCoef[0] = Pos_Now;
+	Traj->TrajCoef[1] = Vel_Now;
+	Traj->TrajCoef[3] = -(2 * (5 * ds + 3 * tfv0)) / T_P3;
+	Traj->TrajCoef[4] = (15 * ds + 8 * tfv0) / T_P4;
+	Traj->TrajCoef[5] = -(3 * (2 * ds + tfv0)) / T_P5;
+}
+
+void Traj_Coeff_Cal_Ds(TrajParameter *Traj, float T, float ds,
+		float Pos_Now, float Vel_Now) {
+	float T_P2 = T * T;
+	float T_P3 = T_P2 * T;
+	float T_P4 = T_P3 * T;
+	float T_P5 = T_P4 * T;
+	float tfv0 = T * Vel_Now;
+	Traj->TrajCoef[0] = Pos_Now;
+	Traj->TrajCoef[1] = Vel_Now;
+	Traj->TrajCoef[3] = -(2 * ((5 * ds) + (3 * tfv0))) / T_P3;
+	Traj->TrajCoef[4] = ((15 * ds) + (8 * tfv0)) / T_P4;
+	Traj->TrajCoef[5] = -(3 * ((2 * ds) + tfv0)) / T_P5;
+}
+
+void TrajFollow(TrajParameter *Traj, float traj_t[5], float *Position,
+		float *Velocity) {
+	*Position = Traj->TrajCoef[0] + (Traj->TrajCoef[1] * traj_t[0])
+			+ (Traj->TrajCoef[3] * traj_t[2]) + (Traj->TrajCoef[4] * traj_t[3])
+			+ (Traj->TrajCoef[5] * traj_t[4]);
+	*Velocity = Traj->TrajCoef[1] + ((3.0 * Traj->TrajCoef[3]) * traj_t[1])
+			+ ((4.0 * Traj->TrajCoef[4]) * traj_t[2])
+			+ ((5.0 * Traj->TrajCoef[5]) * traj_t[3]);
+}
 
 
 /* KalmanFilter Function */
@@ -182,7 +183,7 @@ float PID_Control(PIDParameter *PID,float Setpoint,float Feedback){
 	PID->Error[0] = PID->Setpoint - PID->Feedback;
 	PID->ITerm += PID->Error[0];
 	PID->Output = ((PID->Kp * PID->Error[0]) + (PID->Ki * PID->ITerm)
-			+ (PID->Kp * (PID->Error[0] - PID->Error[1])));
+			+ (PID->Kd * (PID->Error[0] - PID->Error[1])));
 	PID->Error[1] = PID->Error[0]; // Update Error
 	return PID->Output;
 }
@@ -202,19 +203,20 @@ void CascadeControl(ControlParameter *Control, KalmanParameter *kalman,
 	Control->VelocitySetpoint = vel_set;
 
 	/*Kalman Filter*/
-	Control->PositionFeedback = Pos_Feed;
-	KalmanFilter(kalman, Control->PositionFeedback); /*Kalman filter */
+	KalmanFilter(kalman, Pos_Feed); /*Kalman filter */
 	Control->VelocityFeedback = kalman->x2;
+	Control->PositionFeedback = kalman->x1;
 
 	/*Position PID Control*/
 	Control->PositionPIDOutput = PID_Control(&Control->Pos,
 			Control->PositionSetpoint, Control->PositionFeedback);
 	/*Feedforward Velocity*/
-	Control->VelocitySetpoint += Control->PositionPIDOutput;
+	Control->SumVelocityFeedForward = Control->PositionPIDOutput + Control->VelocitySetpoint;
 	/*Velocity PID Control*/
 	Control->VelocityPIDOutput = PID_Control(&Control->Vel,
-			Control->VelocitySetpoint, Control->VelocityFeedback);
+			Control->SumVelocityFeedForward, Control->VelocityFeedback);
 	/*Feedforward Velocity Setpoint*/
-	Control->Output = (Control->Vel_Gfeed * Control->VelocitySetpoint)
+	Control->Output = (Control->Vel_Gfeed * Control->SumVelocityFeedForward)
 			+ Control->VelocityPIDOutput;
+//	Control->Output = Control->VelocityPIDOutput;
 }

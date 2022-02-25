@@ -150,14 +150,15 @@ if __name__ == '__main__':
         Narwhal = Communication(port="com3", baudrate=1000000)                                                 
         print(Narwhal.Connection_Test())
         TimeBefore = time.time()
-        while(True):
-            if (time.time() - TimeBefore >= 0.3):
-                TimeBefore = time.time()
-                # stat,callback = Narwhal.Write(0xF4,[0,0,0,0,0,0,0,0,0,0,0])
-                # print(callback)
-                print(Narwhal.SystemStat_Read())
-                # print(Narwhal.Base_Enc_Read())
-                # print(Narwhal.Enc_Raw_Pos())   
+        print(Narwhal.Write(0xF5,[0,0,0,0,0,0,0,0,0,0,0]))
+        # while(True):
+        #     if (time.time() - TimeBefore >= 0.3):
+        #         TimeBefore = time.time()
+        #         # stat,callback = Narwhal.Write(0xF4,[0,0,0,0,0,0,0,0,0,0,0])
+        #         # print(callback)
+        #         print(Narwhal.SystemStat_Read())
+        #         # print(Narwhal.Base_Enc_Read())
+        #         # print(Narwhal.Enc_Raw_Pos())   
 
     except KeyboardInterrupt:
         print("\nKeyboardInterrupt!!!!\n\n\nShutdown ...\n\n\n\n")

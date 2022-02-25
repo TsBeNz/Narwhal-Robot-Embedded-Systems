@@ -14,7 +14,7 @@
 #include "stm32h7xx.h"
 //#include "arm_math.h"
 
-#define delta_t 0.001
+#define delta_t 0.01
 #define delta_tPow2 (delta_t * delta_t)
 #define delta_tPow3 (delta_tPow2 * delta_t)
 #define delta_tPow4 (delta_tPow3 * delta_t)
@@ -61,11 +61,23 @@ typedef struct {
 	float PositionPIDOutput;
 	PIDParameter Vel;
 	float VelocitySetpoint; 				/* Rad/s  Input (Command Velocity For Feed Forward) */
+	float SumVelocityFeedForward;           /* Rad/s  Input (sum of output position control and velocity feedforward) */
 	float VelocityFeedback;					/* Velocity Output form State Estimator(Kaman Filter)*/
 	float VelocityPIDOutput;
 	float Vel_Gfeed;						/* Velocity Feedforward Gain */
 	float Output;
 } ControlParameter;
+
+typedef struct {
+	float TrajCoef[6]; 			// Adjustable
+	float T; 					// Adjustable
+}TrajParameter;
+
+
+void Traj_Coeff_Cal(TrajParameter *Traj, float T, float Pos_Final, float Pos_Now, float Vel_Now);
+void Traj_Coeff_Cal_Ds(TrajParameter *Traj, float T, float ds, float Pos_Now, float Vel_Now);
+void TrajFollow(TrajParameter *Traj, float traj_t[5], float *Position, float *Velocity);
+
 
 void Step_Driver_init(SteperParameter *step, TIM_HandleTypeDef *htim, uint32_t Channel, GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, uint32_t f_timer,uint8_t DIR_init);
 void Step_Driver(SteperParameter *step, float f_driver);

@@ -1,8 +1,11 @@
 control.c:23:6:Step_Driver_init	24	static
 control.c:38:6:Step_Driver	24	static
-control.c:108:6:Kalman_init	32	static
-control.c:123:6:KalmanFilter	152	static
-control.c:167:6:PID_init	24	static
-control.c:179:7:PID_Control	24	static
-control.c:191:6:CascadeControl_init	48	static
-control.c:198:6:CascadeControl	32	static
+control.c:61:6:Traj_Coeff_Cal	56	static
+control.c:77:6:Traj_Coeff_Cal_Ds	56	static
+control.c:91:6:TrajFollow	24	static
+control.c:109:6:Kalman_init	32	static
+control.c:124:6:KalmanFilter	152	static
+control.c:168:6:PID_init	24	static
+control.c:180:7:PID_Control	24	static
+control.c:192:6:CascadeControl_init	48	static
+control.c:199:6:CascadeControl	32	static
