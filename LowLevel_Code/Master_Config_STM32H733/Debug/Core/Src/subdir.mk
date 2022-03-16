@@ -8,6 +8,7 @@ C_SRCS += \
 ../Core/Src/AS5047U.c \
 ../Core/Src/Neopixel.c \
 ../Core/Src/Potocol.c \
+../Core/Src/TPM75.c \
 ../Core/Src/adc.c \
 ../Core/Src/control.c \
 ../Core/Src/crc.c \
@@ -29,6 +30,7 @@ OBJS += \
 ./Core/Src/AS5047U.o \
 ./Core/Src/Neopixel.o \
 ./Core/Src/Potocol.o \
+./Core/Src/TPM75.o \
 ./Core/Src/adc.o \
 ./Core/Src/control.o \
 ./Core/Src/crc.o \
@@ -50,6 +52,7 @@ C_DEPS += \
 ./Core/Src/AS5047U.d \
 ./Core/Src/Neopixel.d \
 ./Core/Src/Potocol.d \
+./Core/Src/TPM75.d \
 ./Core/Src/adc.d \
 ./Core/Src/control.d \
 ./Core/Src/crc.d \
@@ -75,7 +78,7 @@ Core/Src/%.o: ../Core/Src/%.c Core/Src/subdir.mk
 clean: clean-Core-2f-Src
 
 clean-Core-2f-Src:
-	-$(RM) ./Core/Src/AS5047U.d ./Core/Src/AS5047U.o ./Core/Src/Neopixel.d ./Core/Src/Neopixel.o ./Core/Src/Potocol.d ./Core/Src/Potocol.o ./Core/Src/adc.d ./Core/Src/adc.o ./Core/Src/control.d ./Core/Src/control.o ./Core/Src/crc.d ./Core/Src/crc.o ./Core/Src/dma.d ./Core/Src/dma.o ./Core/Src/gpio.d ./Core/Src/gpio.o ./Core/Src/i2c.d ./Core/Src/i2c.o ./Core/Src/kinematics.d ./Core/Src/kinematics.o ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/spi.d ./Core/Src/spi.o ./Core/Src/stm32h7xx_hal_msp.d ./Core/Src/stm32h7xx_hal_msp.o ./Core/Src/stm32h7xx_it.d ./Core/Src/stm32h7xx_it.o ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/system_stm32h7xx.d ./Core/Src/system_stm32h7xx.o ./Core/Src/tim.d ./Core/Src/tim.o ./Core/Src/usart.d ./Core/Src/usart.o
+	-$(RM) ./Core/Src/AS5047U.d ./Core/Src/AS5047U.o ./Core/Src/Neopixel.d ./Core/Src/Neopixel.o ./Core/Src/Potocol.d ./Core/Src/Potocol.o ./Core/Src/TPM75.d ./Core/Src/TPM75.o ./Core/Src/adc.d ./Core/Src/adc.o ./Core/Src/control.d ./Core/Src/control.o ./Core/Src/crc.d ./Core/Src/crc.o ./Core/Src/dma.d ./Core/Src/dma.o ./Core/Src/gpio.d ./Core/Src/gpio.o ./Core/Src/i2c.d ./Core/Src/i2c.o ./Core/Src/kinematics.d ./Core/Src/kinematics.o ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/spi.d ./Core/Src/spi.o ./Core/Src/stm32h7xx_hal_msp.d ./Core/Src/stm32h7xx_hal_msp.o ./Core/Src/stm32h7xx_it.d ./Core/Src/stm32h7xx_it.o ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/system_stm32h7xx.d ./Core/Src/system_stm32h7xx.o ./Core/Src/tim.d ./Core/Src/tim.o ./Core/Src/usart.d ./Core/Src/usart.o
 
 .PHONY: clean-Core-2f-Src
 

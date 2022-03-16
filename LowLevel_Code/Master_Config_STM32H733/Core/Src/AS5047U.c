@@ -63,18 +63,20 @@ void AS5047U_init(AS5047U *dev, SPI_HandleTypeDef *hspiHandle,
 
 inline void AS5047U_Write(AS5047U *dev,uint16_t Register_Address, uint16_t Data){
 	uint8_t Buffer[3] = {};
+
 	Buffer[0] = ((uint8_t) (Register_Address >> 8)) & 0xBF;
 	Buffer[1] = (uint8_t) (Register_Address & 0xFF);
 	Buffer[2] = (uint8_t) HAL_CRC_Calculate(dev->hcrcHandle, (uint32_t *)Buffer, 2) ^ 0xFF;
 	HAL_GPIO_WritePin(dev->CSGPIOTypedef, dev->CSGPIOPin, 0);
+	for (uint16_t i=0; i <= 550 ; i++);  			//delay before sent data (#Base clock 550MHz)
 	HAL_SPI_Transmit(dev->hspiHandle, Buffer, 3, 1);
 	HAL_GPIO_WritePin(dev->CSGPIOTypedef, dev->CSGPIOPin, 1);
 
-	for (uint16_t i=0; i <= 550 ; i++);  			//delay before sent data (#Base clock 550MHz)
 	Buffer[0] = (uint8_t) (Data >> 8);
 	Buffer[1] = (uint8_t) (Data & 0xFF);
 	Buffer[2] = (uint8_t) HAL_CRC_Calculate(dev->hcrcHandle, (uint32_t *)Buffer, 2) ^ 0xFF;
 	HAL_GPIO_WritePin(dev->CSGPIOTypedef, dev->CSGPIOPin, 0);
+	for (uint16_t i=0; i <= 550 ; i++);  			//delay before sent data (#Base clock 550MHz)
 	HAL_SPI_Transmit(dev->hspiHandle, Buffer, 3, 1);
 	HAL_GPIO_WritePin(dev->CSGPIOTypedef, dev->CSGPIOPin, 1);
 }
@@ -82,6 +84,7 @@ inline void AS5047U_Write(AS5047U *dev,uint16_t Register_Address, uint16_t Data)
 inline HAL_StatusTypeDef AS5047U_Read(AS5047U *dev,uint16_t Register_Address, uint16_t *Data){
 	uint8_t Buffer[3] = {};
 
+	for (uint16_t i=0; i <= 550 ; i++);  			//delay before sent data (#Base clock 550MHz)
 	Buffer[0] = ((uint8_t) (Register_Address >> 8)) | 0x40;
 	Buffer[1] = (uint8_t) (Register_Address & 0xFF);
 	Buffer[2] = (uint8_t) HAL_CRC_Calculate(dev->hcrcHandle, (uint32_t *)Buffer, 2) ^ 0xFF;
@@ -112,16 +115,16 @@ inline uint16_t AS5047U_Position_Highspeed_Read(AS5047U *dev,uint8_t dir){
 	uint8_t Buffer[2] = {};
 	for (uint16_t i=0; i <= 400; i++);
 	HAL_GPIO_WritePin(dev->CSGPIOTypedef, dev->CSGPIOPin, 0);
-	for (uint16_t i=0; i <= 400; i++);
+//	for (uint16_t i=0; i <= 400; i++);
 	HAL_SPI_Transmit(dev->hspiHandle, cmd, 2, 100);
-	for (uint16_t i=0; i <= 400; i++);
+//	for (uint16_t i=0; i <= 400; i++);
 	HAL_GPIO_WritePin(dev->CSGPIOTypedef, dev->CSGPIOPin, 1);
 
 	for (uint16_t i=0; i <= 550; i++);			//delay before sent data (#Base clock 550MHz)
 	HAL_GPIO_WritePin(dev->CSGPIOTypedef, dev->CSGPIOPin, 0);
-	for (uint16_t i=0; i <= 400; i++);
+//	for (uint16_t i=0; i <= 400; i++);
 	HAL_SPI_Receive(dev->hspiHandle, Buffer, 2, 100);
-	for (uint16_t i=0; i <= 400; i++);
+//	for (uint16_t i=0; i <= 400; i++);
 	HAL_GPIO_WritePin(dev->CSGPIOTypedef, dev->CSGPIOPin, 1);
 	if (dir == 1){
 		dev->Position = (uint16_t)((((uint16_t)Buffer[0]&0x3F) << 8) | (uint16_t)Buffer[1]) ^ 0x3FFF;

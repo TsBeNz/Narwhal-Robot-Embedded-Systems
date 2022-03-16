@@ -56,7 +56,10 @@ Kinematics_StatusTypeDef IKnarwhale(float gammabar[3], float chi[3], float q[4])
  * qv[4]	--->	Joint Velocity 		(J. 1-4)
  *
  */
-Kinematics_StatusTypeDef IVK(float q[3], float chi_dot[3], float qv[4])
+
+//Kinematics_StatusTypeDef IVK(float q[3], float chi_dot[3], float qv[4])
+
+Kinematics_StatusTypeDef IVK(float q[4], float chi_dot[3], float qv[4])
 {
   float Jv4[9];
   float Jv4_tmp;
@@ -68,8 +71,6 @@ Kinematics_StatusTypeDef IVK(float q[3], float chi_dot[3], float qv[4])
   int r1;
   int r2;
   int rtemp;
-  /*  h1 = 295.89; */
-  /*  l3= 268.23; */
   qvbar_idx_1 = q[1] + q[2];
   qvbar_idx_2 = sin(qvbar_idx_1);
   Jv4_tmp = cos(q[0]);
@@ -118,5 +119,4 @@ Kinematics_StatusTypeDef IVK(float q[3], float chi_dot[3], float qv[4])
   qv[2] = qvbar_idx_2;
   qv[3] = -qvbar_idx_1 - qvbar_idx_2;
   return Kinematics_OK;
-//  qv[4] = qv5;
 }

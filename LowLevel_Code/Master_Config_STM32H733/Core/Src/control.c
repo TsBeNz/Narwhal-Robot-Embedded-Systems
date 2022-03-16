@@ -58,6 +58,27 @@ void Step_Driver(SteperParameter *step, float f_driver) {
 	}
 }
 
+
+/*
+ * Servo Drive init
+ */
+void Servo_init(ServoParameter *Servo,TIM_HandleTypeDef *htim,
+		uint32_t Channel){
+	Servo->htim = htim;
+	Servo->Channel = Channel;
+	HAL_TIM_PWM_Start(Servo->htim, Servo->Channel);
+	__HAL_TIM_SET_COMPARE(Servo->htim,Servo->Channel,1499);
+}
+
+/*
+ * Servo Drive Function
+ * Deg Range (-90 -> 90)
+ */
+void Servo_Drive(ServoParameter *Servo,int8_t Deg){
+	uint16_t Pulse_in  =  (uint16_t)(((((int16_t)Deg)+90)*5.55555f) + 999);
+	__HAL_TIM_SET_COMPARE(Servo->htim,Servo->Channel,Deg);
+}
+
 void Traj_Coeff_Cal(TrajParameter *Traj, float T, float Pos_Final,
 		float Pos_Now, float Vel_Now) {
 	Traj->T = T;
@@ -189,10 +210,10 @@ float PID_Control(PIDParameter *PID,float Setpoint,float Feedback){
 }
 
 
-void CascadeControl_init(ControlParameter *Control,float PosP,float PosI,float PosD,float VelP,float VelI,float VelD, float GearRatio ,float StepDriver){
+void CascadeControl_init(ControlParameter *Control,float PosP,float PosI,float PosD,float VelP,float VelI,float VelD, float GFeed){
 	PID_init(&Control->Pos,PosP,PosI,PosD);
 	PID_init(&Control->Vel,VelP,VelI,VelD);
-	Control->Vel_Gfeed = (GearRatio * StepDriver) / (2*PI);
+	Control->Vel_Gfeed = GFeed;
 }
 
 

@@ -1,8 +1,12 @@
+from numpy import int16
+from pandas import NA
 import serial
 import time
 import math
+import UdpComms as U
 
-def CRC8(Data,wLength):
+
+def CRC8(Data, wLength):
     wCRCTable = [
         0x00, 0x1D, 0x3A, 0x27, 0x74, 0x69, 0x4E, 0x53, 0xE8, 0xF5, 0xD2, 0xCF, 0x9C, 0x81, 0xA6, 0xBB,
         0xCD, 0xD0, 0xF7, 0xEA, 0xB9, 0xA4, 0x83, 0x9E, 0x25, 0x38, 0x1F, 0x02, 0x51, 0x4C, 0x6B, 0x76,
@@ -19,12 +23,13 @@ def CRC8(Data,wLength):
         0x35, 0x28, 0x0F, 0x12, 0x41, 0x5C, 0x7B, 0x66, 0xDD, 0xC0, 0xE7, 0xFA, 0xA9, 0xB4, 0x93, 0x8E,
         0xF8, 0xE5, 0xC2, 0xDF, 0x8C, 0x91, 0xB6, 0xAB, 0x10, 0x0D, 0x2A, 0x37, 0x64, 0x79, 0x5E, 0x43,
         0xB2, 0xAF, 0x88, 0x95, 0xC6, 0xDB, 0xFC, 0xE1, 0x5A, 0x47, 0x60, 0x7D, 0x2E, 0x33, 0x14, 0x09,
-        0x7F, 0x62, 0x45, 0x58, 0x0B, 0x16, 0x31, 0x2C, 0x97, 0x8A, 0xAD, 0xB0, 0xE3, 0xFE, 0xD9, 0xC4 ]
+        0x7F, 0x62, 0x45, 0x58, 0x0B, 0x16, 0x31, 0x2C, 0x97, 0x8A, 0xAD, 0xB0, 0xE3, 0xFE, 0xD9, 0xC4]
     cCRC_val = 0xC4
     for i in range(wLength):
         index = cCRC_val ^ Data[i]
         cCRC_val = (cCRC_val >> 8) ^ wCRCTable[index]
     return cCRC_val ^ 0xFF
+
 
 class Communication:
     """
@@ -34,6 +39,7 @@ class Communication:
     ==============
     Write() \n
     """
+
     def __init__(self, port="com3", baudrate=1000000):
         try:
             self.ser = serial.Serial(port=port, baudrate=baudrate)
@@ -48,89 +54,141 @@ class Communication:
                   str(port)+" ?\n")
             self.status = 0
 
-    def Write(self,Command,Data):
+    def Write(self, Command, Data):
         Buffer = []
         Buffer.append(0xFF)             # Header
         Buffer.append(Command)          # Command
         if (len(Data) == 11):
             for i in Data:
                 Buffer.append(i)
-        Buffer.append(CRC8(Buffer,13))  # Add CRC Check Sum
+        Buffer.append(CRC8(Buffer, 13))  # Add CRC Check Sum
         for _ in range(5):
             DataSent = bytes(Buffer)
             self.ser.write(DataSent)
             Rx = self.ser.read(4)
             if Rx[0] == 0xFF:
-                if (Rx[-1] == CRC8(Rx[0:-1],3)):
+                if (Rx[-1] == CRC8(Rx[0:-1], 3)):
                     if Rx[1] == 0xFF:
-                        return [True,Rx[2]]
-                    elif  Rx[1] == 0xCC:
-                        print("Sent CRC Fail")
-                    elif  Rx[1] == 0xAA:
-                        print("Sent Header Fail")
+                        return [True, Rx[2]]
+                    elif Rx[1] == 0xCC:
+                        print("W Sent CRC Fail")
+                    elif Rx[1] == 0xAA:
+                        print("W Sent Header Fail")
                 else:
-                    print("Read CRC Fail")
+                    # int_val = int.from_bytes(byte_val, "big")
+                    print("W Read CRC Fail")
             else:
-                print("Read Header Fail")
+                print("W Read Header Fail")
             TimeBefore = time.time()
-            while(time.time() - TimeBefore <= 0.1):
+            while(time.time() - TimeBefore <= 0.02):
                 pass
         else:
-            print("Comunication Error")
-        return [False,[]]
+            print("W Comunication Error")
+        return [False, []]
 
-    def Read(self,Command,Data_Count):
-        Buffer = [0xFF,0,0,0,0,0,0,0,0,0,0,0,0,0]
-        Buffer[1] = Command          # Command
-        Buffer[13] = CRC8(Buffer,13)  # Add CRC Check Sum
-        if (len(Buffer) == 14):
+    def Read(self, Command, Data_Count):
+        Buffer = [0xFF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        Buffer[1] = Command             # Command
+        Buffer[13] = CRC8(Buffer, 13)    # Add CRC Check Sum
+        for _ in range(5):
             DataSent = bytes(Buffer)
             self.ser.write(DataSent)
             Rx = self.ser.read(Data_Count)
             if Rx[0] == 0xFF:
-                if (Rx[-1] == CRC8(Rx[0:-1],Data_Count-1)):
+                if (Rx[-1] == CRC8(Rx[0:-1], Data_Count-1)):
                     if Rx[1] == 0xEE:
-                        return True,Rx[2:-1]
-                    elif  Rx[1] == 0xCC:
-                        print("Sent CRC Fail")
-                    elif  Rx[1] == 0xAA:
-                        print("Sent Header Fail")
+                        return True, Rx[2:-1]
+                    elif Rx[1] == 0xFF:
+                        print("R Command not found")
+                    elif Rx[1] == 0xCC:
+                        print("R Sent CRC Fail")
+                    elif Rx[1] == 0xAA:
+                        print("R Sent Header Fail")
                 else:
-                    print("Read CRC Fail")
+                    print("R Read CRC Fail")
             else:
-                print("Read Header Fail")
+                print("R Read Header Fail")
+            TimeBefore = time.time()
+            while(time.time() - TimeBefore <= 0.02):
+                pass
         else:
-            print("TX Data Frame Error")
-        return False,[]
+            print("R Comunication Error")
+        return False, []
+
+    def SetHome(self):
+        Stat, Feedback = self.Write(0xF5, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        if Stat:
+            if Feedback == 0:
+                return True
+            elif Feedback == 1:
+                print("Trajectory not Finish")
+        return False
+
+    def JogJoint(self, q1, q2, q3, q4):
+        """
+        JogJoint
+        ==============
+        Input Delta Position [rad,rad,rad,rad]
+        In list format
+        """
+        q1 = int(q1*1000)
+        q2 = int(q2*1000)
+        q3 = int(q3*1000)
+        q4 = int(q4*1000)
+        Buffer = [(q1 & 0xFF00) >> 8, q1 & 0xFF, (q2 & 0xFF00) >> 8, q2 & 0xFF,
+                  (q3 & 0xFF00) >> 8, q3 & 0xFF, (q4 & 0xFF00) >> 8, q4 & 0xFF, 0, 0, 0]
+        Stat, Feedback = self.Write(0xFA, Buffer)
+        return Stat
+
+    def JogTask(self, x, y, z):
+        """
+        Cartesian Joint
+        ==============
+        Input Delta Position [mm,mm,mm,rad]
+        In list format
+        """
+        x = int(x*50)
+        y = int(y*50)
+        z = int(z*50)
+        Buffer = [(x & 0xFF00) >> 8, x & 0xFF, (y & 0xFF00) >> 8, y &
+                  0xFF, (z & 0xFF00) >> 8, z & 0xFF, 0, 0, 0, 0, 0]
+        Stat, Feedback = self.Write(0xFB, Buffer)
+        return Stat
 
     def SystemStat_Read(self):
-        Stat , Buf = self.Read(0xA0,5)
+        Stat, Buf = self.Read(0xA0, 5)
         if Stat:
-            return ((Buf[0]<<8) | Buf[1])/1000.0
+            return ((Buf[0] << 8) | Buf[1])/1000.0
         return False
-    
+
     def Base_Enc_Read(self):
-        Stat , Buf = self.Read(0xA1,5)
+        Stat, Buf = self.Read(0xA1, 5)
         if Stat:
-            return ((Buf[0]<<8) | Buf[1])
+            return ((Buf[0] << 8) | Buf[1])
         return False
-    
+
     def Enc_Raw_Pos(self):
-        Stat , Buf = self.Read(0xA2,13)
+        Stat, Buf = self.Read(0xA2, 13)
         if Stat:
-            return [((Buf[0]<<8) | Buf[1]),((Buf[2]<<8) | Buf[3]),((Buf[4]<<8) | Buf[5]),((Buf[6]<<8) | Buf[7]),((Buf[8]<<8) | Buf[9])]
+            return [((Buf[0] << 8) | Buf[1]), ((Buf[2] << 8) | Buf[3]), ((Buf[4] << 8) | Buf[5]), ((Buf[6] << 8) | Buf[7]), ((Buf[8] << 8) | Buf[9])]
         return False
 
-    def Joint_State(self):
-        Stat , Buf = self.Read(0xAA,13)
+    def Joint_Position(self):
+        Stat, Buf = self.Read(0xAA, 13)
         if Stat:
-            return [((Buf[0]<<8) | Buf[1]),((Buf[2]<<8) | Buf[3]),((Buf[4]<<8) | Buf[5]),((Buf[6]<<8) | Buf[7]),((Buf[8]<<8) | Buf[9])]
+            return [(int16((Buf[0] << 8) | Buf[1]))/1000.0, (int16((Buf[2] << 8) | Buf[3]))/1000.0, (int16((Buf[4] << 8) | Buf[5]))/1000.0, (int16((Buf[6] << 8) | Buf[7]))/1000.0, (int16((Buf[8] << 8) | Buf[9]))/1000.0]
         return False
 
-    def TaskSpace_State(self):
-        Stat , Buf = self.Read(0xAB,9)
+    def TaskSpace_Position(self):
+        Stat, Buf = self.Read(0xAB, 9)
         if Stat:
-            return [((Buf[0]<<8) | Buf[1]),((Buf[2]<<8) | Buf[3]),((Buf[4]<<8) | Buf[5])]
+            return [int16((Buf[0] << 8) | Buf[1])/10.0, int16((Buf[2] << 8) | Buf[3])/10.0, int16((Buf[4] << 8) | Buf[5])/10.0]
+        return False
+
+    def ReadAll(self):
+        Stat, Buf = self.Read(0xAF, 35)
+        if Stat:
+            return [(Buf[0] << 8) | Buf[1], ((Buf[2] << 8) | Buf[3])/1000.0, ((Buf[4] << 8) | Buf[5])/1000.0, (int16((Buf[6] << 8) | Buf[7]))/1000.0, (int16((Buf[8] << 8) | Buf[9]))/1000.0, (int16((Buf[10] << 8) | Buf[11]))/1000.0, (int16((Buf[12] << 8) | Buf[13]))/1000.0, (int16((Buf[14] << 8) | Buf[15]))/1000.0, (int16((Buf[16] << 8) | Buf[17]))/1000.0, (int16((Buf[18] << 8) | Buf[19]))/1000.0, (int16((Buf[20] << 8) | Buf[21]))/1000.0, (int16((Buf[22] << 8) | Buf[23]))/1000.0, (int16((Buf[24] << 8) | Buf[25]))/1000.0, int16((Buf[26] << 8) | Buf[27])/10.0, int16((Buf[28] << 8) | Buf[29])/10.0, int16((Buf[30] << 8) | Buf[31])/10.0]
         return False
 
     def Connection_Test(self):
@@ -142,23 +200,63 @@ class Communication:
             False in case can't init uart
         """
         if(self.status):
-            return self.Write(0xF0,[0,0,0,0,0,0,0,0,0,0,0])
+            stat, data = self.Write(0xF0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+            return stat
         return False
+
 
 if __name__ == '__main__':
     try:
-        Narwhal = Communication(port="com3", baudrate=1000000)                                                 
-        print(Narwhal.Connection_Test())
+        Narwhal = Communication(port="com3", baudrate=1000000)
+        print("Connection : " + str(Narwhal.Connection_Test()))
+        sock = U.UdpComms(udpIP="127.0.0.1", portTX=8000,
+                          portRX=8001, enableRX=True, suppressWarnings=True)
+
+        # print(Narwhal.SetHome())
+        # print(Narwhal.JogJoint(0,0.1,0,0))
+        # print(Narwhal.JogTask(0,-30,0))
+
         TimeBefore = time.time()
-        print(Narwhal.Write(0xF5,[0,0,0,0,0,0,0,0,0,0,0]))
-        # while(True):
-        #     if (time.time() - TimeBefore >= 0.3):
-        #         TimeBefore = time.time()
-        #         # stat,callback = Narwhal.Write(0xF4,[0,0,0,0,0,0,0,0,0,0,0])
-        #         # print(callback)
-        #         print(Narwhal.SystemStat_Read())
-        #         # print(Narwhal.Base_Enc_Read())
-        #         # print(Narwhal.Enc_Raw_Pos())   
+        while(True):
+            if (time.time() - TimeBefore >= 0.05):
+                TimeBefore = time.time()
+                # print(Narwhal.SystemStat_Read())
+                # print(Narwhal.Base_Enc_Read())
+                # print(Narwhal.Enc_Raw_Pos())
+                # print(Narwhal.Joint_Position())
+                # print(Narwhal.TaskSpace_Position())
+
+                status = str(Narwhal.ReadAll())
+                status = status.replace("[","")
+                status = status.replace("]","")
+                status = status.replace(",","")
+                status = "status " + status
+                sock.SendData(status)
+
+                data = sock.ReadReceivedData()  # read data
+                if data != None:  # if NEW data has been received since last ReadReceivedData function call
+                    # print(data)  # print new received data
+                    dl = data.split(" ")
+                    if len(dl) == 1:
+                        if dl[0] == 'sethome':
+                            Narwhal.SetHome()
+                    j1 = 0
+                    j2 = 0
+                    j3 = 0
+                    j4 = 0
+                    if (dl[0] == 'q1'):
+                        j1 = float(dl[1])
+                    elif (dl[0] == 'q2'):
+                        j2 = float(dl[1])
+                    elif (dl[0] == 'q3'):
+                        j3 = float(dl[1])
+                    elif (dl[0] == 'q4'):
+                        j4 = float(dl[1])
+                    # elif (dl[0] == 'q5'):
+                    #     y_in = float(dl[1])
+                    if abs(j1) >= 0 or abs(j2) >= 0 or abs(j3) >= 0 or abs(j4) >= 0:
+                        Narwhal.JogJoint(j1,j2,j3,j4)
+                        # print(Narwhal.JogTask(x_in,y_in,0))
 
     except KeyboardInterrupt:
         print("\nKeyboardInterrupt!!!!\n\n\nShutdown ...\n\n\n\n")
