@@ -22,6 +22,6 @@ c3 = (2*pi - 2*pf + T*vi)/T^3;
 % t = solve(eq,T)
 eq = (2*c2)+(6*c3)*tau ==0
 t_vmax = solve(eq,tau)
-eq2 = vmax-(vi+2*c2*t_vmax+3*c3*t_vmax) == 0
-vel = solve(eq2,vmax)
+eq2 = vmax-(vi+2*c2*t_vmax+3*c3*t_vmax^2) == 0
+vel = solve(eq2,T,'Real',true)
 
