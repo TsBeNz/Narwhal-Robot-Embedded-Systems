@@ -7,7 +7,7 @@ Tmax = 5
 % q5f= 0.0786
 % 0.0840  -0.3396   -0.6426  0.9822  0
 % 0.0840 0.4 0.3 -0.7 0
-[q1VSt,t1f] = GenTraj(0,0.0840,0,Tmax);
+[q1VSt,q1d,q1dd,t1f] = GenTraj(0,0.0840,0,Tmax);
 [q2VSt,t2f] = GenTraj(0,0.4,0,Tmax);
 [q3VSt,t3f] = GenTraj(0,0.3,0,Tmax);
 [q4VSt,t4f] = GenTraj(0,-0.7,0,Tmax);
@@ -20,7 +20,27 @@ q2sim = timeseries(q2VSt,linspace(0,Tmax,numel(q2VSt)));
 q3sim = timeseries(q3VSt,linspace(0,Tmax,numel(q3VSt)));
 q4sim = timeseries(q4VSt,linspace(0,Tmax,numel(q4VSt)));
 q5sim = timeseries(q5VSt,linspace(0,Tmax,numel(q5VSt)));
+t = linspace(0,Tmax,numel(q1VSt));
+%%
+subplot(3,1,1)
+plot(t,q1VSt)
+title('Position Trajectory')
+xlabel('time(sec)')
+ylabel('position(rad)')
 
+subplot(3,1,2)
+plot(t,q1d)
+title('Velocity Trajectory')
+xlabel('time(sec)')
+ylabel('velocity(rad/s)')
+
+subplot(3,1,3)
+plot(t,q1dd)
+title('Acceleration Trajectory')
+xlabel('time(sec)')
+ylabel('acceleration(rad/s^2)')
+% plot(t,q1VSt)
+% plot(t,q1d)
 %% TEST IVK
 % syms q1 q2 q3 q4 q5 wx wy wz vx vy vz h1 h2 l1 l2 l3 real
 % taskspace = [wy; wz; vx; vy; vz];

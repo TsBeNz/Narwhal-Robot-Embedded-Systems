@@ -26,7 +26,7 @@ DH =[0   0   h1   0;
 gammabar = [1 1 -1];
 %%  กำหนด Input
 Xviapoint = [(l2+l1)         0      (h1+h2-l3) 0;
-              550            0         30      0;
+              550           20         30      0;
               200            0         50      0 ]; %3 via points
 % viapoint [100]
 % Xviapoint = Xviapoint/10.0;
@@ -56,19 +56,25 @@ end
 %     if j == 1
 %      t_all = linspace(0, itime(j), numel(Xd1{j}));
 %     hold on
-%      subplot(3,1,1)
+%      subplot(2,1,1)
+%      title('Position Trajectory')
+%      xlabel('time(sec)')
+%      ylabel('position(mm)')
 %      plot(t_all,Xd1{j},'r')
 %      hold on
 %      plot(t_all,Xd2{j},'g')
 %      hold on
 %      plot(t_all,Xd3{j},'b')
+% %      hold on
+% %      plot(t_all,Xd4{j},'c')
+% %      hold on
+% %      plot(t_all,Xv5{j},'m')
+%      legend('x','y','z')
 %      hold on
-%      plot(t_all,Xd4{j},'c')
-%      hold on
-%      plot(t_all,Xv5{j},'m')
-% 
-%      hold on
-%      subplot(3,1,2)
+%      subplot(2,1,2)
+%      title('Velocity Trajectory')
+%      xlabel('time(sec)')
+%      ylabel('velocity(mm/s)')
 %      hold on
 %      plot(t_all,Xv1{j},'r')
 %      hold on
@@ -76,29 +82,37 @@ end
 %      hold on
 %      plot(t_all,Xv3{j},'b')
 %      hold on
-%      plot(t_all,Xv4{j},'c')
-%      hold on
-%      plot(t_all,Xv5{j},'m')
-%      hold on
+% %      plot(t_all,Xv4{j},'c')
+% %      hold on
+% %      plot(t_all,Xv5{j},'m')
+% %      hold on
+%      legend('x','y','z')
 % %      subplot(3,1,3)
 % %      plot(t_all,X1{j})
 %      sumt = sumt + itime(j)
 %     else
 %      t_all = linspace(sumt, itime(j)+sumt, numel(Xd1{j}));
 %      hold on
-%      subplot(3,1,1)
+%      subplot(2,1,1)
+%      title('Position Trajectory')
+%      xlabel('time(sec)')
+%      ylabel('position(mm)')
 %      plot(t_all,Xd1{j},'r')
 %      hold on
 %      plot(t_all,Xd2{j},'g')
 %      hold on
 %      plot(t_all,Xd3{j},'b')
 %      hold on
-%      plot(t_all,Xd4{j},'c')
-%      hold on
-%      plot(t_all,Xv5{j},'m')
+% %      plot(t_all,Xd4{j},'c')
+% %      hold on
+% %      plot(t_all,Xv5{j},'m')
 % 
-%      hold on
-%      subplot(3,1,2)
+% %      hold on
+%      legend('x','y','z')
+%      subplot(2,1,2)
+%      title('Velocity Trajectory')
+%      xlabel('time(sec)')
+%      ylabel('velocity(mm/s)')
 %      hold on
 %      plot(t_all,Xv1{j},'r')
 %      hold on
@@ -106,12 +120,13 @@ end
 %      hold on
 %      plot(t_all,Xv3{j},'b')
 %      hold on
-%      plot(t_all,Xv4{j},'c')
-%      hold on
-%      plot(t_all,Xv5{j},'m')
+% %      plot(t_all,Xv4{j},'c')
+% %      hold on
+% %      plot(t_all,Xv5{j},'m')
 % %       hold on
 % %      subplot(3,1,3)
 % %      plot(t_all,Xa_all{j})
+%      legend('x','y','z')
 %      sumt = sumt + itime(j)
 %     end
 % end
@@ -152,9 +167,12 @@ sumt =0
 for j = 1:numel(itime)
     if j == 1
      t_all = linspace(0, itime(j), numel(Xd1{j}));
-%      karn = size(qbar_viapoint{j}(:,1))
+     karn = size(qbar_viapoint{j}(:,1))
      hold on
-     subplot(3,1,1)
+     subplot(2,1,1)
+     title('Position Trajectory')
+     xlabel('time(sec)')
+     ylabel('position(rad)')
      plot(t_all,qbar_viapoint{j}(:,1),'r')
      title('Joint Position')
      hold on
@@ -166,8 +184,11 @@ for j = 1:numel(itime)
      hold on
      plot(t_all,qbar_viapoint{j}(:,5),'m')
      hold on
-
-     subplot(3,1,2)
+     legend('j1','j2','j3','j4','j5')
+     subplot(2,1,2)
+     title('Velocity Trajectory')
+     xlabel('time(sec)')
+     ylabel('velocity(rad/s)')
      plot(t_all,qvbar_viapoint{j}(:,1),'r')
      title('Joint Velocity')
      hold on
@@ -178,12 +199,15 @@ for j = 1:numel(itime)
      plot(t_all,qvbar_viapoint{j}(:,4),'c')
      hold on
      plot(t_all,qvbar_viapoint{j}(:,5),'m')
-
+     legend('j1','j2','j3','j4','j5')
      sumt = sumt + itime(j)
     else
      t_all = linspace(sumt, itime(j)+sumt, numel(Xd1{j}));
-%      karn = size(qbar_viapoint{j}(1,:)hold on
-     subplot(3,1,1)
+     %karn = size(qbar_viapoint{j}(1,:)hold on
+     subplot(2,1,1)
+     title('Position Trajectory')
+     xlabel('time(sec)')
+     ylabel('position(rad)')
      plot(t_all,qbar_viapoint{j}(:,1),'r')
      hold on
      plot(t_all,qbar_viapoint{j}(:,2),'g')
@@ -193,9 +217,12 @@ for j = 1:numel(itime)
      plot(t_all,qbar_viapoint{j}(:,4),'c')
      hold on
      plot(t_all,qbar_viapoint{j}(:,5),'m')
-
+     legend('j1','j2','j3','j4','j5')
      hold on
-     subplot(3,1,2)
+     subplot(2,1,2)
+     title('Velocity Trajectory')
+     xlabel('time(sec)')
+     ylabel('velocity(rad/s)')
      plot(t_all,qvbar_viapoint{j}(:,1),'r')
      hold on
      plot(t_all,qvbar_viapoint{j}(:,2),'g')
@@ -206,6 +233,7 @@ for j = 1:numel(itime)
      hold on
      plot(t_all,qvbar_viapoint{j}(:,5),'m')
      hold on
+     legend('j1','j2','j3','j4','j5')
      sumt = sumt + itime(j)
     end
 end

@@ -5,7 +5,7 @@
  * File: _coder_IVK_mex.h
  *
  * MATLAB Coder version            : 5.3
- * C/C++ source code generated on  : 21-Feb-2022 17:10:32
+ * C/C++ source code generated on  : 28-Feb-2022 21:25:14
  */
 
 #ifndef _CODER_IVK_MEX_H
@@ -27,7 +27,7 @@ MEXFUNCTION_LINKAGE void mexFunction(int32_T nlhs, mxArray *plhs[],
 emlrtCTX mexFunctionCreateRootTLS(void);
 
 void unsafe_IVK_mexFunction(int32_T nlhs, mxArray *plhs[1], int32_T nrhs,
-                            const mxArray *prhs[3]);
+                            const mxArray *prhs[2]);
 
 #ifdef __cplusplus
 }

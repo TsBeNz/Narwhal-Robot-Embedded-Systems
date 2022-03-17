@@ -5,7 +5,7 @@
  * File: _coder_IVK_mex.c
  *
  * MATLAB Coder version            : 5.3
- * C/C++ source code generated on  : 21-Feb-2022 17:10:32
+ * C/C++ source code generated on  : 28-Feb-2022 21:25:14
  */
 
 /* Include Files */
@@ -47,11 +47,11 @@ emlrtCTX mexFunctionCreateRootTLS(void)
  * Arguments    : int32_T nlhs
  *                mxArray *plhs[1]
  *                int32_T nrhs
- *                const mxArray *prhs[3]
+ *                const mxArray *prhs[2]
  * Return Type  : void
  */
 void unsafe_IVK_mexFunction(int32_T nlhs, mxArray *plhs[1], int32_T nrhs,
-                            const mxArray *prhs[3])
+                            const mxArray *prhs[2])
 {
   emlrtStack st = {
       NULL, /* site */
@@ -61,8 +61,8 @@ void unsafe_IVK_mexFunction(int32_T nlhs, mxArray *plhs[1], int32_T nrhs,
   const mxArray *outputs;
   st.tls = emlrtRootTLSGlobal;
   /* Check for proper number of arguments. */
-  if (nrhs != 3) {
-    emlrtErrMsgIdAndTxt(&st, "EMLRT:runTime:WrongNumberOfInputs", 5, 12, 3, 4,
+  if (nrhs != 2) {
+    emlrtErrMsgIdAndTxt(&st, "EMLRT:runTime:WrongNumberOfInputs", 5, 12, 2, 4,
                         3, "IVK");
   }
   if (nlhs > 1) {

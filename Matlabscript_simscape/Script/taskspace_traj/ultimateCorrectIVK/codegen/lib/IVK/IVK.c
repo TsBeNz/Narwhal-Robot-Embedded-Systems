@@ -5,7 +5,7 @@
  * File: IVK.c
  *
  * MATLAB Coder version            : 5.3
- * C/C++ source code generated on  : 21-Feb-2022 17:10:32
+ * C/C++ source code generated on  : 28-Feb-2022 21:25:14
  */
 
 /* Include Files */
@@ -16,13 +16,12 @@
 /*
  * q,qv5,chi_dot  % q,taskspace
  *
- * Arguments    : const double q[5]
- *                double qv5
+ * Arguments    : const double q[4]
  *                const double chi_dot[3]
- *                double qv[5]
+ *                double qv[4]
  * Return Type  : void
  */
-void IVK(const double q[5], double qv5, const double chi_dot[3], double qv[5])
+void IVK(const double q[4], const double chi_dot[3], double qv[4])
 {
   double Jv4[9];
   double Jv4_tmp;
@@ -81,7 +80,6 @@ void IVK(const double q[5], double qv5, const double chi_dot[3], double qv[5])
   qv[1] = qvbar_idx_1;
   qv[2] = qvbar_idx_2;
   qv[3] = -qvbar_idx_1 - qvbar_idx_2;
-  qv[4] = qv5;
 }
 
 /*

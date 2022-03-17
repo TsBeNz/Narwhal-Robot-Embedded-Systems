@@ -5,7 +5,7 @@
  * File: main.c
  *
  * MATLAB Coder version            : 5.3
- * C/C++ source code generated on  : 21-Feb-2022 17:10:32
+ * C/C++ source code generated on  : 28-Feb-2022 21:25:14
  */
 
 /*************************************************************************/
@@ -41,7 +41,7 @@
 /* Function Declarations */
 static void argInit_3x1_real_T(double result[3]);
 
-static void argInit_5x1_real_T(double result[5]);
+static void argInit_4x1_real_T(double result[4]);
 
 static double argInit_real_T(void);
 
@@ -64,14 +64,14 @@ Change this value to the value that the application requires. */
 }
 
 /*
- * Arguments    : double result[5]
+ * Arguments    : double result[4]
  * Return Type  : void
  */
-static void argInit_5x1_real_T(double result[5])
+static void argInit_4x1_real_T(double result[4])
 {
   int idx0;
   /* Loop over the array to initialize each element. */
-  for (idx0 = 0; idx0 < 5; idx0++) {
+  for (idx0 = 0; idx0 < 4; idx0++) {
     /* Set the value of the array element.
 Change this value to the value that the application requires. */
     result[idx0] = argInit_real_T();
@@ -93,16 +93,16 @@ static double argInit_real_T(void)
  */
 static void main_IVK(void)
 {
-  double dv[5];
-  double qv[5];
+  double dv[4];
+  double qv[4];
   double dv1[3];
   /* Initialize function 'IVK' input arguments. */
   /* Initialize function input argument 'q'. */
   /* Initialize function input argument 'chi_dot'. */
   /* Call the entry-point 'IVK'. */
-  argInit_5x1_real_T(dv);
+  argInit_4x1_real_T(dv);
   argInit_3x1_real_T(dv1);
-  IVK(dv, argInit_real_T(), dv1, qv);
+  IVK(dv, dv1, qv);
 }
 
 /*

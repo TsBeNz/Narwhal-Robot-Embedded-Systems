@@ -5,7 +5,7 @@
  * File: _coder_IVK_api.h
  *
  * MATLAB Coder version            : 5.3
- * C/C++ source code generated on  : 21-Feb-2022 17:10:32
+ * C/C++ source code generated on  : 28-Feb-2022 21:25:14
  */
 
 #ifndef _CODER_IVK_API_H
@@ -25,9 +25,9 @@ extern "C" {
 #endif
 
 /* Function Declarations */
-void IVK(real_T q[5], real_T qv5, real_T chi_dot[3], real_T qv[5]);
+void IVK(real_T q[4], real_T chi_dot[3], real_T qv[4]);
 
-void IVK_api(const mxArray *const prhs[3], const mxArray **plhs);
+void IVK_api(const mxArray *const prhs[2], const mxArray **plhs);
 
 void IVK_atexit(void);
 
