@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (9-2020-q2-update)
+# Toolchain: GNU Tools for STM32 (10.3-2021.10)
 ################################################################################
 
 -include ../makefile.init
@@ -43,14 +43,14 @@ BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ART
 EXECUTABLES += \
 Master_Config_STM32H733.elf \
 
+MAP_FILES += \
+Master_Config_STM32H733.map \
+
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
 Master_Config_STM32H733.list \
-
-OBJCOPY_BIN += \
-Master_Config_STM32H733.bin \
 
 
 # All Target
@@ -60,7 +60,7 @@ all: main-build
 main-build: Master_Config_STM32H733.elf secondary-outputs
 
 # Tool invocations
-Master_Config_STM32H733.elf: $(OBJS) $(USER_OBJS) C:\github\Module89-Frab5-G3\LowLevel_Code\Master_Config_STM32H733\STM32H733VGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+Master_Config_STM32H733.elf Master_Config_STM32H733.map: $(OBJS) $(USER_OBJS) C:\github\Module89-Frab5-G3\LowLevel_Code\Master_Config_STM32H733\STM32H733VGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	arm-none-eabi-gcc -o "Master_Config_STM32H733.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"C:\github\Module89-Frab5-G3\LowLevel_Code\Master_Config_STM32H733\STM32H733VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Master_Config_STM32H733.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
@@ -75,17 +75,12 @@ Master_Config_STM32H733.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TO
 	@echo 'Finished building: $@'
 	@echo ' '
 
-Master_Config_STM32H733.bin: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objcopy  -O binary $(EXECUTABLES) "Master_Config_STM32H733.bin"
-	@echo 'Finished building: $@'
-	@echo ' '
-
 # Other Targets
 clean:
-	-$(RM) Master_Config_STM32H733.bin Master_Config_STM32H733.elf Master_Config_STM32H733.list default.size.stdout
+	-$(RM) Master_Config_STM32H733.elf Master_Config_STM32H733.list Master_Config_STM32H733.map default.size.stdout
 	-@echo ' '
 
-secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_BIN)
+secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
 
 fail-specified-linker-script-missing:
 	@echo 'Error: Cannot find the specified linker script. Check the linker settings in the build configuration.'

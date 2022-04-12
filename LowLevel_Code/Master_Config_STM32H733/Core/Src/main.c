@@ -80,6 +80,9 @@ uint32_t Software_Timer_100ms;
 uint8_t UART5_rxBuffer[14] __attribute__((section("RAM_D2"))) = {0};
 uint8_t UART5_txBuffer[36] __attribute__((section("RAM_D2"))) = {0};
 
+float tune_PID[2] = {0,0};
+float T_tune_PID = 2;
+
 
 /*	Jog Variable	*/
 float JointTrajSet[4];
@@ -96,6 +99,7 @@ float v2freqGain;
 uint8_t Buffer_TPM75[2];
 
 
+float test_drive = 50;
 
 
 /* USER CODE END PD */
@@ -183,6 +187,8 @@ int main(void)
   MX_TIM23_Init();
   MX_TIM6_Init();
   MX_UART5_Init();
+  MX_ADC1_Init();
+  MX_ADC2_Init();
   /* USER CODE BEGIN 2 */
   	MX_DMA_Init();
 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_6, 1);	// LVDS EN
@@ -193,9 +199,9 @@ int main(void)
 
 	/*			   Encoder				*/
 	AS5047U_init(&Encoder[0], &hspi3, GPIOD, &hcrc, GPIO_PIN_0,6500);
-	AS5047U_init(&Encoder[1], &hspi3, GPIOD, &hcrc, GPIO_PIN_1,7500);
-	AS5047U_init(&Encoder[2], &hspi3, GPIOD, &hcrc, GPIO_PIN_2,2982);
-	AS5047U_init(&Encoder[3], &hspi3, GPIOD, &hcrc, GPIO_PIN_3,5000);
+	AS5047U_init(&Encoder[1], &hspi3, GPIOD, &hcrc, GPIO_PIN_1,10100);
+	AS5047U_init(&Encoder[2], &hspi3, GPIOD, &hcrc, GPIO_PIN_2,3165);
+	AS5047U_init(&Encoder[3], &hspi3, GPIOD, &hcrc, GPIO_PIN_3,6970);
 
 	HAL_Delay(50);
 
@@ -217,14 +223,14 @@ int main(void)
 	Kalman_init(&Kalman[3], 2000, 0.003);
 
 	/*			CascadeControl			*/
-	CascadeControl_init(&Control[0], 0.7, 0, 0, 15, 0.5, 10, 400);
-	CascadeControl_init(&Control[1], 0.7, 0, 0, 6, 0.2, 8, 190);
-	CascadeControl_init(&Control[2], 0.7, 0, 0, 6, 0.20, 8, 190);
-	CascadeControl_init(&Control[3], 0.7, 0, 0, 6, 0.20, 8, 150);
-//	CascadeControl_init(&Control[0], 0.7, 0, 0, 10, 0, 0, 4*5.18f, 150);
-//	CascadeControl_init(&Control[1], 0.7, 0, 0, 10, 0, 0, 9, 70);
-//	CascadeControl_init(&Control[2], 0.7, 0, 0, 10, 0, 0, 9, 150);
-//	CascadeControl_init(&Control[3], 0.7, 0, 0, 10, 0, 0, 6, 150);
+	CascadeControl_init(&Control[0], 0.6, 0, 0, 15, 0.5, 10, 400);
+	CascadeControl_init(&Control[1], 0.7, 0, 0.3, 10, 0.1, 5, 430);
+	CascadeControl_init(&Control[2], 0.7, 0, 0, 10, 0.2, 0, 450);
+	CascadeControl_init(&Control[3], 0.8, 0.005, 0, 10, 0.1, 3, 470);
+//	CascadeControl_init(&Control[0], 0.7, 0, 0, 15, 0.5, 10, 400);
+//	CascadeControl_init(&Control[1], 0.7, 0, 0, 6, 0.2, 8, 190);
+//	CascadeControl_init(&Control[2], 0.7, 0, 0, 6, 0.20, 8, 190);
+//	CascadeControl_init(&Control[3], 0.7, 0, 0, 6, 0.20, 8, 150);
 
 	/*  Power Supply Temperature Sensor */
 	TPM75_init(&TempSensor, &hi2c2, 0, 0, 1);
@@ -240,7 +246,7 @@ int main(void)
 
 	/*			Stepper Driver			*/
 	Step_Driver_init(&Stepper[0], &htim13, TIM_CHANNEL_1, GPIOE, GPIO_PIN_0, 500000, 1);
-	Step_Driver_init(&Stepper[1], &htim14, TIM_CHANNEL_1, GPIOE, GPIO_PIN_1, 500000, 1);
+	Step_Driver_init(&Stepper[1], &htim14, TIM_CHANNEL_1, GPIOE, GPIO_PIN_1, 500000, 0);
 	Step_Driver_init(&Stepper[2], &htim15, TIM_CHANNEL_1, GPIOE, GPIO_PIN_2, 500000, 0);
 	Step_Driver_init(&Stepper[3], &htim16, TIM_CHANNEL_1, GPIOE, GPIO_PIN_3, 500000, 0);
 
@@ -274,6 +280,26 @@ int main(void)
 //			Test_traj = 0;
 //			Traj_Flag = 1;
 //		}
+
+//		Step_Driver(&Stepper[0], 0);
+//		Step_Driver(&Stepper[1], 50);
+//		Step_Driver(&Stepper[2], 30);
+//		Step_Driver(&Stepper[3], 0);
+
+	   uint8_t tune_joint = 3;
+	   if (tune_PID[0] != tune_PID[1]){
+		   	tune_PID[1] = tune_PID[0];
+			t = 0;
+			float Joint[4] = {0,0,0,0};
+//			for (int i = 0; i < 4; i++) {
+//				Joint[i] = Control[i].PositionFeedback;
+//			}
+//			Joint[tune_joint] = tune_PID[0];
+			for (int i = 0; i < 4; i++) {
+				Traj_Coeff_Cal(&Traj[i], T_tune_PID, Joint[i], Control[i].PositionFeedback, Control[i].VelocityFeedback);
+			}
+			Traj_Flag = 0x0F;
+	   }
 
 		if (Contorl_Flag) {
 			Control_Function();
@@ -313,14 +339,17 @@ void SystemClock_Config(void)
   /** Supply configuration update enable
   */
   HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY);
+
   /** Configure the main internal regulator output voltage
   */
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
 
   while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
+
   /** Macro to configure the PLL clock source
   */
   __HAL_RCC_PLL_PLLSOURCE_CONFIG(RCC_PLLSOURCE_HSE);
+
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
@@ -340,6 +369,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -736,4 +766,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-

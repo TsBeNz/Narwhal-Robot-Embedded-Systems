@@ -256,11 +256,10 @@ typedef struct __UART_HandleTypeDef
   __IO HAL_UART_StateTypeDef    RxState;             /*!< UART state information related to Rx operations. This
                                                           parameter can be a value of @ref HAL_UART_StateTypeDef */
 
-  void (* TxHalfCpltCallback)(struct __UART_HandleTypeDef *huart);
-__IO uint32_t                 ErrorCode;           /*!< UART Error code                    */
+  __IO uint32_t                 ErrorCode;           /*!< UART Error code                    */
 
 #if (USE_HAL_UART_REGISTER_CALLBACKS == 1)
-  /*!< UART Tx Half Complete Callback        */
+  void (* TxHalfCpltCallback)(struct __UART_HandleTypeDef *huart);        /*!< UART Tx Half Complete Callback        */
   void (* TxCpltCallback)(struct __UART_HandleTypeDef *huart);            /*!< UART Tx Complete Callback             */
   void (* RxHalfCpltCallback)(struct __UART_HandleTypeDef *huart);        /*!< UART Rx Half Complete Callback        */
   void (* RxCpltCallback)(struct __UART_HandleTypeDef *huart);            /*!< UART Rx Complete Callback             */
