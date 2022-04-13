@@ -207,7 +207,7 @@ class Communication:
 
 if __name__ == '__main__':
     try:
-        Narwhal = Communication(port="com3", baudrate=1000000)
+        Narwhal = Communication(port="com5", baudrate=1000000)
         print("Connection : " + str(Narwhal.Connection_Test()))
         sock = U.UdpComms(udpIP="127.0.0.1", portTX=8000,
                           portRX=8001, enableRX=True, suppressWarnings=True)
@@ -235,28 +235,43 @@ if __name__ == '__main__':
 
                 data = sock.ReadReceivedData()  # read data
                 if data != None:  # if NEW data has been received since last ReadReceivedData function call
-                    # print(data)  # print new received data
+                    print(data)  # print new received data
+                    while(time.time() - TimeBefore <= 0.005):
+                        pass
                     dl = data.split(" ")
                     if len(dl) == 1:
                         if dl[0] == 'sethome':
-                            Narwhal.SetHome()
-                    j1 = 0
-                    j2 = 0
-                    j3 = 0
-                    j4 = 0
-                    if (dl[0] == 'q1'):
-                        j1 = float(dl[1])
-                    elif (dl[0] == 'q2'):
-                        j2 = float(dl[1])
-                    elif (dl[0] == 'q3'):
-                        j3 = float(dl[1])
-                    elif (dl[0] == 'q4'):
-                        j4 = float(dl[1])
-                    # elif (dl[0] == 'q5'):
-                    #     y_in = float(dl[1])
-                    if abs(j1) >= 0 or abs(j2) >= 0 or abs(j3) >= 0 or abs(j4) >= 0:
-                        Narwhal.JogJoint(j1,j2,j3,j4)
-                        # print(Narwhal.JogTask(x_in,y_in,0))
+                            print(Narwhal.SetHome())
+                    elif len(dl) == 2:
+                        j1 = 0
+                        j2 = 0
+                        j3 = 0
+                        j4 = 0
+                        x = 0
+                        y = 0
+                        z = 0
+                        if (dl[0] == 'q1'):
+                            j1 = float(dl[1])
+                        elif (dl[0] == 'q2'):
+                            j2 = float(dl[1])
+                        elif (dl[0] == 'q3'):
+                            j3 = float(dl[1])
+                        elif (dl[0] == 'q4'):
+                            j4 = float(dl[1])
+                        # elif (dl[0] == 'q5'):
+                        #     y_in = float(dl[1])
+                        elif (dl[0] == 'x'):
+                            x = float(dl[1])
+                        elif (dl[0] == 'y'):
+                            y = float(dl[1])
+                        elif (dl[0] == 'z'):
+                            z = float(dl[1])
+
+                        if abs(j1) >= 0 or abs(j2) >= 0 or abs(j3) >= 0 or abs(j4) >= 0:
+                            Narwhal.JogJoint(j1,j2,j3,j4)
+                        elif abs(x) >= 0 or abs(y) >= 0 or abs(z) >= 0:
+                            Narwhal.JogTask(x,y,z)
+                    # print(Narwhal.JogTask(x_in,y_in,0))
 
     except KeyboardInterrupt:
         print("\nKeyboardInterrupt!!!!\n\n\nShutdown ...\n\n\n\n")

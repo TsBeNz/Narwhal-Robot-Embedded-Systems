@@ -26,6 +26,8 @@ typedef enum
  * Function
  */
 
-Kinematics_StatusTypeDef IKnarwhale(float gammabar[3], float chi[4], float q[5]);
+Kinematics_StatusTypeDef IPK(float gammabar[3], float chi[4], float q[5]);
 Kinematics_StatusTypeDef IVK(float q[4], float chi_dot[3], float qv[4]);
+void FPK(float q[5], float l3, float Pne[3]);
+void FVK(float q[5], float qd[5], float l3, float twist[6]);
 #endif /* INC_KINEMATICS_H_ */

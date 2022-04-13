@@ -18,7 +18,7 @@
  * q[4]				---> JointSpace Position
  *
  */
-Kinematics_StatusTypeDef IKnarwhale(float gammabar[3], float chi[3], float q[4]) {
+Kinematics_StatusTypeDef IPK(float gammabar[3], float chi[3], float q[4]) {
 	float c2;
 	float q2;
 	float q3;
@@ -119,4 +119,124 @@ Kinematics_StatusTypeDef IVK(float q[4], float chi_dot[3], float qv[4])
   qv[2] = qvbar_idx_2;
   qv[3] = -qvbar_idx_1 - qvbar_idx_2;
   return Kinematics_OK;
+}
+
+
+/* Function Definitions */
+/*
+ * Arguments    : const double q[5]
+ *                double l3
+ *                double Pne[3]
+ * Return Type  : void
+ */
+void FPK(float q[5], float l3, float Pne[3]) {
+	float Pne_tmp;
+	float b_Pne_tmp;
+	float c_Pne_tmp;
+	float d_Pne_tmp;
+	float e_Pne_tmp;
+	float f_Pne_tmp;
+	float g_Pne_tmp;
+	float h_Pne_tmp;
+	/* offset */
+	Pne_tmp = cos(q[0]);
+	b_Pne_tmp = sin(q[2]);
+	c_Pne_tmp = cos(q[2]);
+	d_Pne_tmp = sin(q[1]);
+	e_Pne_tmp = cos(q[1]);
+	f_Pne_tmp = sin(q[0]);
+	g_Pne_tmp = cos(q[3]);
+	h_Pne_tmp = sin(q[3]);
+	Pne[0] =
+			((380.0
+					* (Pne_tmp * e_Pne_tmp * c_Pne_tmp
+							- Pne_tmp * d_Pne_tmp * b_Pne_tmp)
+					+ l3
+							* (g_Pne_tmp
+									* (cos(q[0]) * cos(q[1]) * b_Pne_tmp
+											+ Pne_tmp * c_Pne_tmp * d_Pne_tmp)
+									+ h_Pne_tmp
+											* (cos(q[0]) * cos(q[1]) * cos(q[2])
+													- cos(q[0]) * sin(q[1])
+															* sin(q[2]))))
+					+ 20.0 * Pne_tmp) - 380.0 * Pne_tmp * d_Pne_tmp;
+	Pne[1] = ((l3
+			* (g_Pne_tmp
+					* (e_Pne_tmp * f_Pne_tmp * b_Pne_tmp
+							+ c_Pne_tmp * f_Pne_tmp * d_Pne_tmp)
+					- h_Pne_tmp
+							* (f_Pne_tmp * d_Pne_tmp * b_Pne_tmp
+									- e_Pne_tmp * c_Pne_tmp * f_Pne_tmp))
+			- 380.0
+					* (sin(q[0]) * sin(q[1]) * sin(q[2])
+							- cos(q[1]) * cos(q[2]) * sin(q[0])))
+			+ 20.0 * f_Pne_tmp) - 380.0 * f_Pne_tmp * d_Pne_tmp;
+	Pne[2] = ((380.0 * (e_Pne_tmp * b_Pne_tmp + c_Pne_tmp * d_Pne_tmp) + 295.89)
+			+ 380.0 * e_Pne_tmp)
+			- l3
+					* (g_Pne_tmp
+							* (cos(q[1]) * cos(q[2]) - d_Pne_tmp * b_Pne_tmp)
+							- h_Pne_tmp
+									* (cos(q[1]) * sin(q[2])
+											+ cos(q[2]) * sin(q[1])));
+}
+
+
+/* Function Definitions */
+/*
+ * Arguments    : const double q[5]
+ *                const double qd[5]
+ *                double l3
+ *                double twist[6]
+ * Return Type  : void
+ */
+void FVK(float q[5], float qd[5], float l3, float twist[6])
+{
+	float b_twist_tmp;
+	float c_twist_tmp;
+	float d_twist_tmp;
+	float e_twist_tmp;
+	float f_twist_tmp;
+	float g_twist_tmp;
+	float twist_tmp;
+	float twist_tmp_tmp;
+	float twist_tmp_tmp_tmp;
+  /*  joint vel */
+  /* offset */
+  /*  l3= 269; */
+	twist_tmp = sin(q[0]);
+	b_twist_tmp = cos(q[0]);
+	twist_tmp_tmp_tmp = q[1] + q[2];
+	twist_tmp_tmp = twist_tmp_tmp_tmp + q[3];
+	c_twist_tmp = cos(twist_tmp_tmp);
+	d_twist_tmp = sin(twist_tmp_tmp);
+	twist[0] = ((qd[1] * twist_tmp + qd[2] * twist_tmp) + qd[3] * twist_tmp)
+			+ qd[4] * d_twist_tmp * b_twist_tmp;
+	twist[1] = ((qd[4] * sin((q[1] + q[2]) + q[3]) * twist_tmp
+			- qd[2] * b_twist_tmp) - qd[3] * b_twist_tmp) - qd[1] * b_twist_tmp;
+	twist[2] = qd[0] - qd[4] * c_twist_tmp;
+	e_twist_tmp = 380.0 * sin(twist_tmp_tmp_tmp);
+	f_twist_tmp = (e_twist_tmp + 380.0 * cos(q[1]))
+			- l3 * cos((q[1] + q[2]) + q[3]);
+	twist_tmp_tmp = 380.0 * cos(twist_tmp_tmp_tmp);
+	twist_tmp_tmp_tmp = 380.0 * sin(q[1]);
+	g_twist_tmp = l3 * qd[3];
+	twist[3] = ((g_twist_tmp * c_twist_tmp * b_twist_tmp
+			- qd[2] * cos(q[0]) * (e_twist_tmp - l3 * c_twist_tmp))
+			- qd[0] * twist_tmp
+					* (((twist_tmp_tmp + 20.0) - twist_tmp_tmp_tmp)
+							+ l3 * d_twist_tmp))
+			- qd[1] * cos(q[0]) * f_twist_tmp;
+	twist[4] =
+			((qd[0] * b_twist_tmp
+					* (((380.0 * cos(q[1] + q[2]) + 20.0) - 380.0 * sin(q[1]))
+							+ l3 * sin((q[1] + q[2]) + q[3]))
+					- qd[2] * sin(q[0])
+							* (380.0 * sin(q[1] + q[2])
+									- l3 * cos((q[1] + q[2]) + q[3])))
+					- qd[1] * sin(q[0]) * f_twist_tmp)
+					+ l3 * qd[3] * cos((q[1] + q[2]) + q[3]) * twist_tmp;
+	twist_tmp = l3 * sin((q[1] + q[2]) + q[3]);
+	twist[5] = (qd[1] * ((twist_tmp_tmp - twist_tmp_tmp_tmp) + twist_tmp)
+			+ qd[2] * (twist_tmp_tmp + twist_tmp)) + g_twist_tmp * d_twist_tmp;
 }

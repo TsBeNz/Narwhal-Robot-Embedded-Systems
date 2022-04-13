@@ -100,7 +100,7 @@ uint8_t Buffer_TPM75[2];
 
 
 float test_drive = 50;
-
+float test_count = 0;
 
 /* USER CODE END PD */
 
@@ -286,20 +286,20 @@ int main(void)
 //		Step_Driver(&Stepper[2], 30);
 //		Step_Driver(&Stepper[3], 0);
 
-	   uint8_t tune_joint = 3;
-	   if (tune_PID[0] != tune_PID[1]){
-		   	tune_PID[1] = tune_PID[0];
-			t = 0;
-			float Joint[4] = {0,0,0,0};
+//	   uint8_t tune_joint = 3;
+//	   if (tune_PID[0] != tune_PID[1]){
+//		   	tune_PID[1] = tune_PID[0];
+//			t = 0;
+//			float Joint[4] = {0,0,0,0};
+////			for (int i = 0; i < 4; i++) {
+////				Joint[i] = Control[i].PositionFeedback;
+////			}
+////			Joint[tune_joint] = tune_PID[0];
 //			for (int i = 0; i < 4; i++) {
-//				Joint[i] = Control[i].PositionFeedback;
+//				Traj_Coeff_Cal(&Traj[i], T_tune_PID, Joint[i], Control[i].PositionFeedback, Control[i].VelocityFeedback);
 //			}
-//			Joint[tune_joint] = tune_PID[0];
-			for (int i = 0; i < 4; i++) {
-				Traj_Coeff_Cal(&Traj[i], T_tune_PID, Joint[i], Control[i].PositionFeedback, Control[i].VelocityFeedback);
-			}
-			Traj_Flag = 0x0F;
-	   }
+//			Traj_Flag = 0x0F;
+//	   }
 
 		if (Contorl_Flag) {
 			Control_Function();
@@ -466,6 +466,7 @@ inline void Narwhal_Protocol() {
 			float q_Feed[4];
 			float dq[4];
 			float d_Task[3];
+			float q_in[5] = {0,0,0,0,0};
 			float task[3] = { -500, 300, 50 };
 			uint16_t Temperature_Protocol = Temperature * 1000;
 
@@ -486,11 +487,13 @@ inline void Narwhal_Protocol() {
 			case 0xF5:
 				/* GoHome */
 				if (Traj_Flag == 0) {
+					test_count += 1;
 					t = 0;
 					for (int i = 0; i < 4; i++) {
 						Traj_Coeff_Cal(&Traj[i], 2, 0,
 								Control[i].PositionFeedback,
 								Control[i].VelocityFeedback);
+						test_count += 5;
 					}
 					Traj_Flag = 0x0F;
 					UART5_txBuffer[2] = 0x00;
@@ -583,7 +586,6 @@ inline void Narwhal_Protocol() {
 				break;
 				/* 		Data to MCU End	*/
 
-
 				/* 		Sent Data to Master Start 	*/
 			case 0xA0:
 				/* System Status */
@@ -626,7 +628,12 @@ inline void Narwhal_Protocol() {
 				/* Task Space Position */
 				UART5_txBuffer[1] = 0xEE;
 				/*	Forward Kinematics */
-//				float task[3] = { -500, 300, 50 };
+
+				for (int i = 0; i < 4; i++) {
+					q_in[i] = Control[i].PositionFeedback;
+				}
+				FPK(q_in, 269.0f, task);
+
 				for (int i = 0; i < 3; i++) {
 					int16_t Buf = (int16_t) (task[i] * 10.0f);
 					UART5_txBuffer[2 + (2 * i)] = (uint8_t) ((Buf >> 8) & 0xFF);
@@ -638,8 +645,10 @@ inline void Narwhal_Protocol() {
 				/* UI Feedback */
 				UART5_txBuffer[1] = 0xEE;
 				/*	Forward Kinematics */
-//				float task[3] = { -500, 300, 50 };
-
+				for (int i = 0; i < 4; i++) {
+					q_in[i] = Control[i].PositionFeedback;
+				}
+				FPK(q_in, 269.0f, task);
 
 				/* Station Encoder */
 				UART5_txBuffer[2] = (uint8_t) ((Encoder[0].Position >> 8) & 0xFF);
@@ -693,6 +702,34 @@ inline void Narwhal_Protocol() {
 		SentData(3);
 	}
 	HAL_UART_Receive_IT(&huart5, UART5_rxBuffer, 14);
+}
+
+inline void JointSpaceTraj(float Task2Move[3],float Time2Move){
+	float gamma[3] = {1,1,-1};
+	float q_inv[4];
+	IPK(gamma, Task2Move, q_inv);
+
+	t = 0;
+	for (int i = 0; i < 4; i++) {
+		Traj_Coeff_Cal(&Traj[i], Time2Move, q_inv[i],
+				Control[i].PositionFeedback,
+				Control[i].VelocityFeedback);
+	}
+	Traj_Flag = 0x0F;
+}
+
+inline void JointSpaceTraj(float Task2Move[3],float Time2Move){
+	float gamma[3] = {1,1,-1};
+	float q_inv[4];
+	IPK(gamma, Task2Move, q_inv);
+
+	t = 0;
+	for (int i = 0; i < 4; i++) {
+		Traj_Coeff_Cal(&Traj[i], Time2Move, q_inv[i],
+				Control[i].PositionFeedback,
+				Control[i].VelocityFeedback);
+	}
+	Traj_Flag = 0x0F;
 }
 
 inline void Control_Function(){
