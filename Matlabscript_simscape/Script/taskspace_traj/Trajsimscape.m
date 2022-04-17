@@ -7,35 +7,45 @@ Tmax = 5
 % q5f= 0.0786
 % 0.0840  -0.3396   -0.6426  0.9822  0
 % 0.0840 0.4 0.3 -0.7 0
-[q1VSt,q1d,q1dd,t1f] = GenTraj(0,0.0840,0,Tmax);
-[q2VSt,t2f] = GenTraj(0,0.4,0,Tmax);
-[q3VSt,t3f] = GenTraj(0,0.3,0,Tmax);
-[q4VSt,t4f] = GenTraj(0,-0.7,0,Tmax);
-[q5VSt,t5f] = GenTraj(0,0,0,Tmax);
+[q1d,q1v,q1a,t1f] = GenTraj(0,0.0840,0,Tmax);
+[q2d,q2v,q2a,t2f] = GenTraj(0,0.4,0,Tmax);
+[q3d,q3v,q3a,t3f] = GenTraj(0,0.3,0,Tmax);
+[q4d,q4v,q4a,t4f] = GenTraj(0,-0.7,0,Tmax);
+[q5d,q5v,q5a,t5f] = GenTraj(0,0.4,0,Tmax);
 % tall = [t1f t2f t3f t4f t5f];
 % T = max(tall)
 % %% convert qiVSt  to timeseries for import to simulink
-q1sim = timeseries(q1VSt,linspace(0,Tmax,numel(q1VSt)));
-q2sim = timeseries(q2VSt,linspace(0,Tmax,numel(q2VSt)));
-q3sim = timeseries(q3VSt,linspace(0,Tmax,numel(q3VSt)));
-q4sim = timeseries(q4VSt,linspace(0,Tmax,numel(q4VSt)));
-q5sim = timeseries(q5VSt,linspace(0,Tmax,numel(q5VSt)));
-t = linspace(0,Tmax,numel(q1VSt));
+q1dsim = timeseries(q1d,linspace(0,Tmax,numel(q1d)));
+q1vsim = timeseries(q1v,linspace(0,Tmax,numel(q1v)));
+% q1asim = timeseries(q1a,linspace(0,Tmax,numel(q1a)));
+q2dsim = timeseries(q2d,linspace(0,Tmax,numel(q2d)));
+q2vsim = timeseries(q2v,linspace(0,Tmax,numel(q2v)));
+% q2asim = timeseries(q2a,linspace(0,Tmax,numel(q2a)));
+q3dsim = timeseries(q3d,linspace(0,Tmax,numel(q3d)));
+q3vsim = timeseries(q3v,linspace(0,Tmax,numel(q3v)));
+% q3asim = timeseries(q3a,linspace(0,Tmax,numel(q3a)));
+q4dsim = timeseries(q4d,linspace(0,Tmax,numel(q4d)));
+q4vsim = timeseries(q4v,linspace(0,Tmax,numel(q4v)));
+% q4asim = timeseries(q4a,linspace(0,Tmax,numel(q4a)));
+q5dsim = timeseries(q5d,linspace(0,Tmax,numel(q5d)));
+q5vsim = timeseries(q5v,linspace(0,Tmax,numel(q5v)));
+% q5asim = timeseries(q5a,linspace(0,Tmax,numel(q5a)));
+t = linspace(0,Tmax,numel(q1d));
 %%
 subplot(3,1,1)
-plot(t,q1VSt)
+plot(t,q1d)
 title('Position Trajectory')
 xlabel('time(sec)')
 ylabel('position(rad)')
 
 subplot(3,1,2)
-plot(t,q1d)
+plot(t,q1v)
 title('Velocity Trajectory')
 xlabel('time(sec)')
 ylabel('velocity(rad/s)')
 
 subplot(3,1,3)
-plot(t,q1dd)
+plot(t,q1a)
 title('Acceleration Trajectory')
 xlabel('time(sec)')
 ylabel('acceleration(rad/s^2)')

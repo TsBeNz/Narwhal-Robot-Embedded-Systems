@@ -7,6 +7,6 @@ function [qd,qv,tf] = cubic_traj(q0,qf,v0,vmax)
     t = linspace(0,tf,1000*(tf - 0));
     qd = c0 + c1*t +c2*t^2 +c3*t^3;
     qv = c1 + 2*c2*t + 3*c3*t^2;
-    % เหมือนจะไม่ถูกนะอันนี้ฝน livescript ถูก
+    % เหมือนจะไม่ถูกนะอันนี้ส่วน livescript ถูก
 end
 
