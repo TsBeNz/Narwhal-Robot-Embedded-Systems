@@ -2,7 +2,7 @@
  * control.c
  *
  *  Created on: Jan 26, 2022
- *      Author: thans
+ *      Author: thansak
  */
 
 #include "control.h"
@@ -80,33 +80,20 @@ void Servo_Drive(ServoParameter *Servo,int8_t Deg){
 }
 
 void Traj_Coeff_Cal(TrajParameter *Traj, float T, float Pos_Final,
-		float Pos_Now, float Vel_Now) {
-	Traj->T = T;
-	float T_P2 = T * T;
-	float T_P3 = T_P2 * T;
-	float T_P4 = T_P3 * T;
-	float T_P5 = T_P4 * T;
-	float ds = Pos_Now - Pos_Final;
-	float tfv0 = T * Vel_Now;
-	Traj->TrajCoef[0] = Pos_Now;
-	Traj->TrajCoef[1] = Vel_Now;
-	Traj->TrajCoef[3] = -(2 * (5 * ds + 3 * tfv0)) / T_P3;
-	Traj->TrajCoef[4] = (15 * ds + 8 * tfv0) / T_P4;
-	Traj->TrajCoef[5] = -(3 * (2 * ds + tfv0)) / T_P5;
-}
-
-void Traj_Coeff_Cal_Ds(TrajParameter *Traj, float T, float ds,
-		float Pos_Now, float Vel_Now) {
-	float T_P2 = T * T;
-	float T_P3 = T_P2 * T;
-	float T_P4 = T_P3 * T;
-	float T_P5 = T_P4 * T;
-	float tfv0 = T * Vel_Now;
-	Traj->TrajCoef[0] = Pos_Now;
-	Traj->TrajCoef[1] = Vel_Now;
-	Traj->TrajCoef[3] = -(2 * ((5 * ds) + (3 * tfv0))) / T_P3;
-	Traj->TrajCoef[4] = ((15 * ds) + (8 * tfv0)) / T_P4;
-	Traj->TrajCoef[5] = -(3 * ((2 * ds) + tfv0)) / T_P5;
+  float Pos_Now, float Vel_Final, float Vel_Now) {
+ Traj->T = T;
+ float T_P2 = T * T;
+ float T_P3 = T_P2 * T;
+ float T_P4 = T_P3 * T;
+ float T_P5 = T_P4 * T;
+ float ds = Pos_Now - Pos_Final;
+ float tfv0 = T * Vel_Now;
+ float tfv1 = T * Vel_Final;
+ Traj->TrajCoef[0] = Pos_Now;
+ Traj->TrajCoef[1] = Vel_Now;
+ Traj->TrajCoef[3] = -(2 * (5 * ds + 3 * tfv0 + 2*tfv1)) / T_P3;
+ Traj->TrajCoef[4] = (15 * ds + 8 * tfv0 + 7*tfv1) / T_P4;
+ Traj->TrajCoef[5] = -(3 * (2 * ds + tfv0 + tfv1)) / T_P5;
 }
 
 void TrajFollow(TrajParameter *Traj, float traj_t[5], float *Position,
@@ -184,6 +171,10 @@ void KalmanFilter(KalmanParameter *kalman ,double theta_k) {
 	kalman->p12 = pp12;
 	kalman->p21 = pp21;
 	kalman->p22 = pp22;
+}
+
+float BaseENCRead(){
+	return 970.0f;  //fsaldfkjas;dflkjas;dflksjf;asdf
 }
 
 void PID_init(PIDParameter *PID, float Kp, float Ki, float Kd) {

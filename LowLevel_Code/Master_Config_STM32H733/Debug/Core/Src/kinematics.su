@@ -1,3 +1,7 @@
-../Core/Src/kinematics.c:21:26:IKnarwhale	56	static
+../Core/Src/kinematics.c:21:26:IPK	56	static
 ../Core/Src/kinematics.c:62:26:IVK	112	static
 ../Core/Src/kinematics.c:132:6:FPK	104	static
+../Core/Src/kinematics.c:193:6:FVK	96	static
+../Core/Src/kinematics.c:238:6:ChessPose	56	static
+../Core/Src/kinematics.c:265:6:FindR	32	static
+../Core/Src/kinematics.c:272:6:FindXYSpeed	40	static

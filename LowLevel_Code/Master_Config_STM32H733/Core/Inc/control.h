@@ -14,7 +14,7 @@
 #include "stm32h7xx.h"
 //#include "arm_math.h"
 
-#define delta_t 0.005
+#define delta_t 0.001
 #define delta_tPow2 (delta_t * delta_t)
 #define delta_tPow3 (delta_tPow2 * delta_t)
 #define delta_tPow4 (delta_tPow3 * delta_t)
@@ -79,8 +79,7 @@ typedef struct {
 }TrajParameter;
 
 
-void Traj_Coeff_Cal(TrajParameter *Traj, float T, float Pos_Final, float Pos_Now, float Vel_Now);
-void Traj_Coeff_Cal_Ds(TrajParameter *Traj, float T, float ds, float Pos_Now, float Vel_Now);
+void Traj_Coeff_Cal(TrajParameter *Traj, float T, float Pos_Final, float Pos_Now, float Vel_Final, float Vel_Now);
 void TrajFollow(TrajParameter *Traj, float traj_t[5], float *Position, float *Velocity);
 
 void Step_Driver_init(SteperParameter *step, TIM_HandleTypeDef *htim, uint32_t Channel, GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, uint32_t f_timer,uint8_t DIR_init);
@@ -89,6 +88,7 @@ void Servo_init(ServoParameter *Servo,TIM_HandleTypeDef *htim, uint32_t Channel)
 void Servo_Drive(ServoParameter *Servo,int8_t Deg);
 void Kalman_init(KalmanParameter *kalman, double Q, double R);
 void KalmanFilter(KalmanParameter *kalman ,double theta_k);
+float BaseENCRead();
 void PID_init(PIDParameter *PID, float Kp, float Ki, float Kd);
 float PID_Control(PIDParameter *PID,float Setpoint,float Feedback);
 void CascadeControl_init(ControlParameter *Control,float PosP,float PosI,float PosD,float VelP,float VelI,float VelD, float GFeed);

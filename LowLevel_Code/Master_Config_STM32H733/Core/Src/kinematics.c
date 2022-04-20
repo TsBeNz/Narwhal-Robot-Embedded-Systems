@@ -190,8 +190,7 @@ void FPK(float q[5], float l3, float Pne[3]) {
  *                double twist[6]
  * Return Type  : void
  */
-void FVK(float q[5], float qd[5], float l3, float twist[6])
-{
+void FVK(float q[4], float qd[4], float l3, float twist[3]) {
 	float b_twist_tmp;
 	float c_twist_tmp;
 	float d_twist_tmp;
@@ -201,42 +200,78 @@ void FVK(float q[5], float qd[5], float l3, float twist[6])
 	float twist_tmp;
 	float twist_tmp_tmp;
 	float twist_tmp_tmp_tmp;
-  /*  joint vel */
-  /* offset */
-  /*  l3= 269; */
-	twist_tmp = sin(q[0]);
-	b_twist_tmp = cos(q[0]);
+	/*  joint vel */
+	/* offset */
+	/*  l3= 269; */
+	twist_tmp = cos(q[0]);
 	twist_tmp_tmp_tmp = q[1] + q[2];
 	twist_tmp_tmp = twist_tmp_tmp_tmp + q[3];
-	c_twist_tmp = cos(twist_tmp_tmp);
+	b_twist_tmp = cos(twist_tmp_tmp);
+	c_twist_tmp = sin(q[0]);
 	d_twist_tmp = sin(twist_tmp_tmp);
-	twist[0] = ((qd[1] * twist_tmp + qd[2] * twist_tmp) + qd[3] * twist_tmp)
-			+ qd[4] * d_twist_tmp * b_twist_tmp;
-	twist[1] = ((qd[4] * sin((q[1] + q[2]) + q[3]) * twist_tmp
-			- qd[2] * b_twist_tmp) - qd[3] * b_twist_tmp) - qd[1] * b_twist_tmp;
-	twist[2] = qd[0] - qd[4] * c_twist_tmp;
 	e_twist_tmp = 380.0 * sin(twist_tmp_tmp_tmp);
 	f_twist_tmp = (e_twist_tmp + 380.0 * cos(q[1]))
 			- l3 * cos((q[1] + q[2]) + q[3]);
 	twist_tmp_tmp = 380.0 * cos(twist_tmp_tmp_tmp);
 	twist_tmp_tmp_tmp = 380.0 * sin(q[1]);
 	g_twist_tmp = l3 * qd[3];
-	twist[3] = ((g_twist_tmp * c_twist_tmp * b_twist_tmp
-			- qd[2] * cos(q[0]) * (e_twist_tmp - l3 * c_twist_tmp))
-			- qd[0] * twist_tmp
+	twist[0] = ((g_twist_tmp * b_twist_tmp * twist_tmp
+			- qd[2] * twist_tmp * (e_twist_tmp - l3 * b_twist_tmp))
+			- qd[0] * c_twist_tmp
 					* (((twist_tmp_tmp + 20.0) - twist_tmp_tmp_tmp)
 							+ l3 * d_twist_tmp))
-			- qd[1] * cos(q[0]) * f_twist_tmp;
-	twist[4] =
-			((qd[0] * b_twist_tmp
+			- qd[1] * twist_tmp * f_twist_tmp;
+	twist[1] =
+			((qd[0] * twist_tmp
 					* (((380.0 * cos(q[1] + q[2]) + 20.0) - 380.0 * sin(q[1]))
 							+ l3 * sin((q[1] + q[2]) + q[3]))
-					- qd[2] * sin(q[0])
+					- qd[2] * c_twist_tmp
 							* (380.0 * sin(q[1] + q[2])
 									- l3 * cos((q[1] + q[2]) + q[3])))
-					- qd[1] * sin(q[0]) * f_twist_tmp)
-					+ l3 * qd[3] * cos((q[1] + q[2]) + q[3]) * twist_tmp;
+					- qd[1] * c_twist_tmp * f_twist_tmp)
+					+ l3 * qd[3] * cos((q[1] + q[2]) + q[3]) * c_twist_tmp;
 	twist_tmp = l3 * sin((q[1] + q[2]) + q[3]);
-	twist[5] = (qd[1] * ((twist_tmp_tmp - twist_tmp_tmp_tmp) + twist_tmp)
+	twist[2] = (qd[1] * ((twist_tmp_tmp - twist_tmp_tmp_tmp) + twist_tmp)
 			+ qd[2] * (twist_tmp_tmp + twist_tmp)) + g_twist_tmp * d_twist_tmp;
+}
+
+void ChessPose(uint8_t Chess_Index, float Chess_Theta, float ChessPosition[2]) {
+	/*
+	 *
+	 */
+	uint8_t X = Chess_Index%8;
+	uint8_t N = Chess_Index/8;
+
+	float l = 230;
+	float L = 400;
+
+	float b_positionx_tmp;
+	float c_positionx_tmp;
+	float d_positionx_tmp;
+	float e_positionx_tmp;
+	float positionx_tmp;
+	positionx_tmp = cos(Chess_Theta);
+	b_positionx_tmp = sin(Chess_Theta);
+	c_positionx_tmp = 9.0 * L / 16.0;
+	d_positionx_tmp = X * L / 8.0 - c_positionx_tmp;
+	e_positionx_tmp = N * L / 8.0;
+	ChessPosition[0] = ((b_positionx_tmp * d_positionx_tmp
+			+ (e_positionx_tmp - c_positionx_tmp * positionx_tmp)) + l)
+			+ L / 2.0;
+	ChessPosition[1] = -positionx_tmp * d_positionx_tmp
+			+ (e_positionx_tmp - c_positionx_tmp) * b_positionx_tmp;
+}
+
+void FindR(float Offset2Center[2], float ChessPosition[2],
+		float *ChessRadius) {
+	float DeltaX = ChessPosition[0] - Offset2Center[0];
+	float DeltaY = ChessPosition[1] - Offset2Center[1];
+	*ChessRadius = sqrt((DeltaX * DeltaX) + (DeltaY * DeltaY));
+}
+
+void FindXYSpeed(float Chess_Theta, float Chess_Omaga, float ChessRadius, float SpeedXY[2]){
+	float SpeedTangent = Chess_Omaga * ChessRadius;
+	float Theta = Chess_Theta + (PI/2);
+	SpeedXY[0] = SpeedTangent*sin(Theta);
+	SpeedXY[1] = SpeedTangent*cos(Theta);
 }

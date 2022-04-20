@@ -12,6 +12,7 @@
 // include stm32h7 driver
 #include "stm32h7xx.h"
 #include "math.h"
+#define PI               3.14159265358979f
 
 
 typedef enum
@@ -29,5 +30,10 @@ typedef enum
 Kinematics_StatusTypeDef IPK(float gammabar[3], float chi[4], float q[5]);
 Kinematics_StatusTypeDef IVK(float q[4], float chi_dot[3], float qv[4]);
 void FPK(float q[5], float l3, float Pne[3]);
-void FVK(float q[5], float qd[5], float l3, float twist[6]);
+void FVK(float q[4], float qd[4], float l3, float twist[3]);
+
+void ChessPose(uint8_t Chess_Index, float Chess_Theta, float ChessPosition[2]);
+void FindR(float Offset2Center[2], float chessPosition[2], float *ChessRadius);
+void FindXYSpeed(float Chess_Theta, float Chess_Omaga, float ChessRadius, float SpeedXY[2]);
+
 #endif /* INC_KINEMATICS_H_ */
