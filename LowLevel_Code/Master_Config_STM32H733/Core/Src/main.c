@@ -53,7 +53,7 @@
 
 
 double Z_TopOffset = 180;
-double Z_2GripOffset = 30;
+double Z_2GripOffset = 20;
 
 double Task2ShowinMonitor[3];
 uint8_t Servo_Griper[2];
@@ -85,6 +85,9 @@ ServoParameter Servo[2];
 NeopixelParameter Neopixel;
 TrajParameter Traj[7]; /* index 0-3 is joint Traj and 4 is Z axis Traj */
 
+double Chess_Board_Base_Encoder = 0;
+uint16_t BaseENC[2] = {0,0};
+
 double TPM75_Temp;
 
 double SetPoint_Position[5];
@@ -103,7 +106,7 @@ uint32_t Software_Timer_1s;
 uint32_t Software_Timer_100ms;
 
 uint8_t UART5_rxBuffer[14] __attribute__((section("RAM_D2"))) = {0};
-uint8_t UART5_txBuffer[36] __attribute__((section("RAM_D2"))) = {0};
+uint8_t UART5_txBuffer[45] __attribute__((section("RAM_D2"))) = {0};
 uint8_t ChessIndex[2];
 float ChessHight;
 uint8_t Chess_Move_Start_Flag = 0;
@@ -258,15 +261,13 @@ int main(void)
 	HAL_Delay(50);
 
 	/* Encoder ABI Res Setting */
-//	AS5047U_Write(&Encoder[0], 0x0019, 0b00100000);
-//	AS5047U_Write(&Encoder[1], 0x0019, 0b00100000);
-//	AS5047U_Write(&Encoder[2], 0x0019, 0b00100000);
-//	AS5047U_Write(&Encoder[3], 0x0019, 0b00100000);
-
 	AS5047U_Write(&Encoder[0], 0x001A, 0b01000000);
 	AS5047U_Write(&Encoder[1], 0x001A, 0b01000000);
 	AS5047U_Write(&Encoder[2], 0x001A, 0b01000000);
 	AS5047U_Write(&Encoder[3], 0x001A, 0b01000000);
+
+	/* Chess Board Encoder */
+	HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
 
 	/*			Kalman Filter			*/
 	Kalman_init(&Kalman[0], 5000, 0.001);
@@ -525,11 +526,17 @@ inline void Narwhal_Protocol() {
 		uint8_t CRC_Cal = CRC8(UART5_rxBuffer, 13);
 		if (CRC_Cal == UART5_rxBuffer[13]) {
 			UART5_txBuffer[0] = 0xFF;
+			double Safe_Zone[4] = { 0, 0.5, -0.5, 0 };
 			double q_Feed[4];
 			double dq[4];
 			double d_Task[3];
+			double d_Task_Set[3];
 			double q_in[5] = {0,0,0,0,0};
-			double task[3] = { -500, 300, 50 };
+			double q_in_Set[5] = {0,0,0,0,0};
+			double task[3] = { 0, 0, 0 };
+			int Chess_Board_Base_Encoder2Sent;
+
+
 			uint16_t Temperature_Protocol = Temperature * 1000;
 			uint16_t Temperature_Protocol2 = TPM75_Temp * 1000;
 
@@ -562,6 +569,31 @@ inline void Narwhal_Protocol() {
 				} else {
 					UART5_txBuffer[2] = 0x01;
 				}
+				UART5_txBuffer[1] = 0xFF;
+				SentData(3);
+				break;
+			case 0xF6:
+				/* GoSafe */
+				if (Traj_Flag == 0) {
+					;
+					t = 0;
+					for (int i = 0; i < 4; i++) {
+						Traj_Coeff_Cal(&Traj[i], 2.5, Safe_Zone[i],
+								Control[i].PositionFeedback, 0,
+								Control[i].VelocityFeedback);
+					}
+					Traj_Flag = 0x0F;
+					Chessmove_State = 0;
+					UART5_txBuffer[2] = 0x00;
+				} else {
+					UART5_txBuffer[2] = 0x01;
+				}
+				UART5_txBuffer[1] = 0xFF;
+				SentData(3);
+				break;
+			case 0xF7:
+				/* Set0 BaseEnc */
+				Chess_Board_Base_Encoder = 0;
 				UART5_txBuffer[1] = 0xFF;
 				SentData(3);
 				break;
@@ -690,8 +722,9 @@ inline void Narwhal_Protocol() {
 			case 0xA1:
 				/* Station Encoder Position */
 				UART5_txBuffer[1] = 0xEE;
-				UART5_txBuffer[2] = (uint8_t) ((Encoder[0].Position >> 8) & 0xFF);
-				UART5_txBuffer[3] = (uint8_t) (Encoder[0].Position & 0xFF);
+				Chess_Board_Base_Encoder2Sent = (int)(Chess_Board_Base_Encoder * 1000.0f);
+				UART5_txBuffer[2] = (uint8_t) ((Chess_Board_Base_Encoder2Sent >> 8) & 0xFF);
+				UART5_txBuffer[3] = (uint8_t) (Chess_Board_Base_Encoder2Sent & 0xFF);
 				SentData(4);
 				break;
 			case 0xA2:
@@ -741,11 +774,16 @@ inline void Narwhal_Protocol() {
 				for (int i = 0; i < 4; i++) {
 					q_in[i] = Control[i].PositionFeedback;
 				}
+				for (int i = 0; i < 4; i++) {
+					q_in_Set[i] = Control[i].PositionSetpoint;
+				}
 				FPK(q_in, 269.0f, task);
+				FPK(q_in_Set, 269.0f, d_Task_Set);
 
 				/* Station Encoder */
-				UART5_txBuffer[2] = (uint8_t) ((Encoder[0].Position >> 8) & 0xFF);
-				UART5_txBuffer[3] = (uint8_t) (Encoder[0].Position & 0xFF);
+				Chess_Board_Base_Encoder2Sent = Chess_Board_Base_Encoder * 1000.0f;
+				UART5_txBuffer[2] = (uint8_t) ((Chess_Board_Base_Encoder2Sent >> 8) & 0xFF);
+				UART5_txBuffer[3] = (uint8_t) (Chess_Board_Base_Encoder2Sent & 0xFF);
 
 				/* Temp */
 				UART5_txBuffer[4] = (uint8_t) ((Temperature_Protocol >> 8) & 0xFF);
@@ -778,7 +816,12 @@ inline void Narwhal_Protocol() {
 					UART5_txBuffer[29 + (2 * i)] = (uint8_t) (Buf & 0xFF);
 				}
 				UART5_txBuffer[34] = Chess_Move_Start_Flag;
-				SentData(35);
+				for (int i = 0; i < 3; i++) {
+					int16_t Buf = (int16_t) (d_Task_Set[i] * 10.0f);
+					UART5_txBuffer[35 + (2 * i)] = (uint8_t) ((Buf >> 8) & 0xFF);
+					UART5_txBuffer[36 + (2 * i)] = (uint8_t) (Buf & 0xFF);
+				}
+				SentData(41);
 				break;
 			default:
 				UART5_txBuffer[2] = 0xFF;
@@ -819,6 +862,17 @@ inline void Control_Function() {
 	J2 = EncPulse2Rad_Read(&Encoder[1], 0);
 	J3 = EncPulse2Rad_Read(&Encoder[2], 0);
 	J4 = EncPulse2Rad_Read(&Encoder[3], 0);
+
+	BaseENC[0] = TIM2->CNT;
+	int ds = BaseENC[0] - BaseENC[1]; //find delta s
+	BaseENC[1] = BaseENC[0];
+	//Unwrapping position
+	if (ds >= 1024) {
+		ds -= 2047;
+	} else if (ds <= -1024) {
+		ds += 2047;
+	}
+	Chess_Board_Base_Encoder += (ds/2048.0f)*2.0f*PI;
 
 	/***** Joint Space SetPoint Gen *****/
 	if (Chessmove_State == 0) {
@@ -924,14 +978,12 @@ inline void LMoveTaskSpace(double Task2Go[3], double Time2Move){
 
 inline void ChessNotMovePathWay(uint8_t Index2Move, double Z_Offset, uint8_t IsJMove) {
 	/***** Encoder Read *****/
-	double BaseEnc;
 	double PositionXY[2];
-	double SafePose[3] = {250, -270, 350};
+	double SafePose[3] = {210, -270, 250};
 
 	/***** Base Encoder Read *****/
 //	BaseEnc = BaseENCRead();   //?????????????????????????????????????????????????????????
-	BaseEnc = 0;
-	ChessPose(Index2Move, BaseEnc, PositionXY);
+	ChessPose(Index2Move, Chess_Board_Base_Encoder, PositionXY);
 	double q_Feed[4];
 	double Pne[3];
 	q_Feed[0] = Control[0].PositionFeedback;
@@ -948,11 +1000,11 @@ inline void ChessNotMovePathWay(uint8_t Index2Move, double Z_Offset, uint8_t IsJ
 	if (Index2Move == 64){
 		TaskSpace2Go[0] = SafePose[0];
 		TaskSpace2Go[1] = SafePose[1];
-		TaskSpace2Go[0] = SafePose[2];
+		TaskSpace2Go[2] = SafePose[2];
 		if (IsJMove) {
 			JMoveTaskSpace(TaskSpace2Go, Time2MoveDynamic);
 		} else {
-			JMoveTaskSpace(TaskSpace2Go, 4);
+			JMoveTaskSpace(TaskSpace2Go, 1);
 		}
 	}
 	else {
@@ -976,7 +1028,7 @@ inline void ChessNotMovePathWay(uint8_t Index2Move, double Z_Offset, uint8_t IsJ
 void ChessMoveStateMachine() {
 	static uint8_t ChangeState = 0;
 	double Speed_Error = 0.05;
-	double SafePose[3] = {250, -250, 150};
+	double SafePose[3] = {210, -270, 250};
 	double Time2MoveDynamic = 1.3;
 	double q_Feed[4];
 	double Pne[3];
