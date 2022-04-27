@@ -128,10 +128,10 @@ void Error_Handler(void);
 #define SPI3_EN_GPIO_Port GPIOD
 #define ENC6B_Pin GPIO_PIN_3
 #define ENC6B_GPIO_Port GPIOB
-#define ENC5A_StepGriper_Pin GPIO_PIN_4
-#define ENC5A_StepGriper_GPIO_Port GPIOB
-#define ENC5B_DIR_Pin GPIO_PIN_5
-#define ENC5B_DIR_GPIO_Port GPIOB
+#define ENC5A_GriperA_Pin GPIO_PIN_4
+#define ENC5A_GriperA_GPIO_Port GPIOB
+#define ENC5B_GriperB_Pin GPIO_PIN_5
+#define ENC5B_GriperB_GPIO_Port GPIOB
 #define EN45_Pin GPIO_PIN_6
 #define EN45_GPIO_Port GPIOB
 #define EN123_Pin GPIO_PIN_7

@@ -85,7 +85,7 @@ void TrajFollow(TrajParameter *Traj, double traj_t[5], double *Position, double 
 void Step_Driver_init(SteperParameter *step, TIM_HandleTypeDef *htim, uint32_t Channel, GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, uint32_t f_timer,uint8_t DIR_init);
 void Step_Driver(SteperParameter *step, double f_driver);
 void Servo_init(ServoParameter *Servo,TIM_HandleTypeDef *htim, uint32_t Channel);
-void Servo_Drive(ServoParameter *Servo,int8_t Deg);
+void Servo_Drive(ServoParameter *Servo,uint8_t Deg);
 void Kalman_init(KalmanParameter *kalman, double Q, double R);
 void KalmanFilter(KalmanParameter *kalman ,double theta_k);
 double BaseENCRead();

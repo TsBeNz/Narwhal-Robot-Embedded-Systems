@@ -52,8 +52,11 @@
 /*   Module 8-9 Variable Section   */
 
 
-double Z_TopOffset = 170;
-double Z_2GripOffset = 70;
+double Z_TopOffset = 180;
+double Z_2GripOffset = 30;
+
+double Task2ShowinMonitor[3];
+uint8_t Servo_Griper[2];
 
 
 double Temperature;
@@ -102,6 +105,7 @@ uint32_t Software_Timer_100ms;
 uint8_t UART5_rxBuffer[14] __attribute__((section("RAM_D2"))) = {0};
 uint8_t UART5_txBuffer[36] __attribute__((section("RAM_D2"))) = {0};
 uint8_t ChessIndex[2];
+float ChessHight;
 uint8_t Chess_Move_Start_Flag = 0;
 ChessMoveState ChessMoveStates = Chess_idle;
 
@@ -302,8 +306,10 @@ int main(void)
 	Step_Driver_init(&Stepper[3], &htim16, TIM_CHANNEL_1, GPIOE, GPIO_PIN_3, 500000, 1);
 
 	/*         	  Servo             */
-	Servo_init(&Servo[0], &htim5, TIM_CHANNEL_1);
-	Servo_init(&Servo[2], &htim5, TIM_CHANNEL_2);
+	Servo_init(&Servo[0], &htim3, TIM_CHANNEL_1);
+	Servo_init(&Servo[1], &htim3, TIM_CHANNEL_2);
+	Servo_Drive(&Servo[0], 90);
+	Servo_Drive(&Servo[1], 90);
 
 	/*			Trajectory			*/
 	Test_traj_Val[0] = 0;
@@ -327,6 +333,9 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+//		Servo_Drive(&Servo[0], Servo_Griper[0]);
+//		Servo_Drive(&Servo[1], Servo_Griper[1]);
+
 		if (Test_traj) {
 			Test_traj = 0;
 			JMoveTaskSpace(TaskSpace_Live_Ex1, Time_Live_Ex1);
@@ -516,7 +525,6 @@ inline void Narwhal_Protocol() {
 		uint8_t CRC_Cal = CRC8(UART5_rxBuffer, 13);
 		if (CRC_Cal == UART5_rxBuffer[13]) {
 			UART5_txBuffer[0] = 0xFF;
-
 			double q_Feed[4];
 			double dq[4];
 			double d_Task[3];
@@ -586,7 +594,7 @@ inline void Narwhal_Protocol() {
 				}
 				IVK(q_Feed, d_Task, dq);
 				t = 0;
-				for (int i = 0; i < 3; i++) {
+				for (int i = 0; i < 4; i++) {
 					double Setpoint = Control[i].PositionFeedback + dq[i];
 					Traj_Coeff_Cal(&Traj[i], 0.5, Setpoint,
 							Control[i].PositionFeedback, 0,
@@ -602,14 +610,16 @@ inline void Narwhal_Protocol() {
 				/* Joint Set */
 				t = 0;
 				double Joint[4];
-				double T = 2;
-				double Distance;
+				double T = 1;
+				double Distance = -1;
 				for (int i = 0; i < 4; i++) {
 					Joint[i] = (int16_t) (((UART5_rxBuffer[2 + (2 * i)]) << 8)
 							| (UART5_rxBuffer[3 + (2 * i)])) / 1000.0;
-					Distance += fabs(Joint[i] - Control[i].PositionFeedback);
+					if (Joint[i] > Distance){
+						Distance = Joint[i];
+					}
 				}
-				T += (Distance * 0.0075f);
+				T += (Distance * 0.8);
 				for (int i = 0; i < 4; i++) {
 					Traj_Coeff_Cal(&Traj[i], T, Joint[i],
 							Control[i].PositionFeedback, 0,
@@ -624,22 +634,45 @@ inline void Narwhal_Protocol() {
 			case 0xFE:
 				/* Cartesian Set */
 				t = 0;
-				for (int i = 0; i < 4; i++) {
-					double JointJog = (int16_t) (((UART5_rxBuffer[2 + (2 * i)])
-							<< 8) | (UART5_rxBuffer[3 + (2 * i)])) / 1000.0;
-					Traj_Coeff_Cal(&Traj[i], 0.5,
-							JointJog + Control[i].PositionFeedback,
-							Control[i].PositionFeedback, 0,
-							Control[i].VelocityFeedback);
+				double Task[3];
+				for (int i = 0; i < 3; i++) {
+					Task[i] = (int16_t) (((UART5_rxBuffer[2 + (2 * i)]) << 8)
+							| (UART5_rxBuffer[3 + (2 * i)])) / 50.0;
 				}
-				Traj_Flag = 0x0F;
-				Chessmove_State = 0;
+				double q_Feed[4];
+				double Pne[3];
+				q_Feed[0] = Control[0].PositionFeedback;
+				q_Feed[1] = Control[1].PositionFeedback;
+				q_Feed[2] = Control[2].PositionFeedback;
+				q_Feed[3] = Control[3].PositionFeedback;
+
+				FPK(q_Feed, 269.0f, Pne);
+				double Time2MoveDynamic = 1.3;
+				Time2MoveDynamic += (sqrt(
+						((Task[0] - Pne[0]) * (Task[0] - Pne[0]))
+								+ ((Task[1] - Pne[1]) * (Task[1] - Pne[1]))
+								+ ((Task[2] - Pne[2]) * (Task[2] - Pne[2]))))
+						* 0.0075;
+
+				JMoveTaskSpace(Task, Time2MoveDynamic);
 				UART5_txBuffer[2] = 0x00;
 				UART5_txBuffer[1] = 0xFF;
 				SentData(3);
 				break;
 			case 0xFF:
 				/* Chess Move */
+//				uint8_t ChessIndex[2];
+				for (int i = 0; i < 2; i++) {
+					ChessIndex[i] = (uint8_t) (UART5_rxBuffer[2 + i]);
+				}
+				ChessHight = (float)(((UART5_rxBuffer[4]) << 8)
+						| (UART5_rxBuffer[5])) / 100.0f;
+
+				if (ChessIndex[0] == 65 || ChessIndex[1] == 65){
+					ChessMoveStates = ChessMove_Finish;
+				}
+
+				Chess_Move_Start_Flag = 1;
 				UART5_txBuffer[2] = 0x05;
 				UART5_txBuffer[1] = 0xFF;
 				SentData(3);
@@ -744,7 +777,8 @@ inline void Narwhal_Protocol() {
 					UART5_txBuffer[28 + (2 * i)] = (uint8_t) ((Buf >> 8) & 0xFF);
 					UART5_txBuffer[29 + (2 * i)] = (uint8_t) (Buf & 0xFF);
 				}
-				SentData(34);
+				UART5_txBuffer[34] = Chess_Move_Start_Flag;
+				SentData(35);
 				break;
 			default:
 				UART5_txBuffer[2] = 0xFF;
@@ -892,6 +926,7 @@ inline void ChessNotMovePathWay(uint8_t Index2Move, double Z_Offset, uint8_t IsJ
 	/***** Encoder Read *****/
 	double BaseEnc;
 	double PositionXY[2];
+	double SafePose[3] = {250, -270, 350};
 
 	/***** Base Encoder Read *****/
 //	BaseEnc = BaseENCRead();   //?????????????????????????????????????????????????????????
@@ -903,32 +938,54 @@ inline void ChessNotMovePathWay(uint8_t Index2Move, double Z_Offset, uint8_t IsJ
 	q_Feed[1] = Control[1].PositionFeedback;
 	q_Feed[2] = Control[2].PositionFeedback;
 	q_Feed[3] = Control[3].PositionFeedback;
-
 	FPK(q_Feed, 269.0f, Pne);
-	double Time2MoveDynamic = 1.3;
+	double Time2MoveDynamic = 1.2;
 	Time2MoveDynamic += (sqrt(
 			((PositionXY[0] - Pne[0]) * (PositionXY[0] - Pne[0]))
-					+ ((PositionXY[1] - Pne[1]) * (PositionXY[1] - Pne[1])))) * 0.0075;
+					+ ((PositionXY[1] - Pne[1]) * (PositionXY[1] - Pne[1])))) * 0.01;
 
 	double TaskSpace2Go[3];
-	TaskSpace2Go[0] = PositionXY[0];
-	TaskSpace2Go[1] = PositionXY[1];
-	TaskSpace2Go[2] = Z_Offset;
-	if (IsJMove){
-		JMoveTaskSpace(TaskSpace2Go, Time2MoveDynamic);
+	if (Index2Move == 64){
+		TaskSpace2Go[0] = SafePose[0];
+		TaskSpace2Go[1] = SafePose[1];
+		TaskSpace2Go[0] = SafePose[2];
+		if (IsJMove) {
+			JMoveTaskSpace(TaskSpace2Go, Time2MoveDynamic);
+		} else {
+			JMoveTaskSpace(TaskSpace2Go, 4);
+		}
 	}
-	else{
-		JMoveTaskSpace(TaskSpace2Go, 3);
+	else {
+		float Z_Board_Offset;
+		if (PositionXY[0] > 250 && PositionXY[0] < 450) {
+			Z_Board_Offset = (PositionXY[0] - 250) * 0.05f;
+		} else if (PositionXY[0] > 450 && PositionXY[0] < 700) {
+			Z_Board_Offset = (PositionXY[0] - 450) * 0.1f;
+		}
+		TaskSpace2Go[0] = PositionXY[0];
+		TaskSpace2Go[1] = PositionXY[1];
+		TaskSpace2Go[2] = Z_Offset + ChessHight + Z_Board_Offset;
+		if (IsJMove) {
+			JMoveTaskSpace(TaskSpace2Go, Time2MoveDynamic);
+		} else {
+			JMoveTaskSpace(TaskSpace2Go, 2);
+		}
 	}
 }
 
 void ChessMoveStateMachine() {
 	static uint8_t ChangeState = 0;
 	double Speed_Error = 0.05;
+	double SafePose[3] = {250, -250, 150};
+	double Time2MoveDynamic = 1.3;
+	double q_Feed[4];
+	double Pne[3];
+
 	switch (ChessMoveStates) {
 	case Chess_idle:
 		if (Chess_Move_Start_Flag) {
 			ChessMoveStates = Move_2_Start_Top_Point;
+			ChangeState = 1;
 		}
 		break;
 	case Move_2_Start_Top_Point:
@@ -951,12 +1008,14 @@ void ChessMoveStateMachine() {
 		if (!Traj_Flag) {
 			if (All_Joint_Speed_Avg() <= Speed_Error) {
 				ChessMoveStates = Move_2_Start_Point_and_Griping;
+				Servo_Drive(&Servo[0], 110); //Ungrip
 				ChangeState = 1;
 			}
 		}
 		break;
 	case Move_2_Start_Point_and_Griping:
 		// Grip Chess
+		Servo_Drive(&Servo[0], 0); //Grip
 
 		ChessMoveStates = Back_2_Start_Top_Point;
 		break;
@@ -1001,7 +1060,7 @@ void ChessMoveStateMachine() {
 		break;
 	case Move_2_End_Point_and_Ungriping:
 		// Grip Chess
-
+		Servo_Drive(&Servo[0], 110); //Ungrip
 		ChessMoveStates = Back_2_End_Top_Point;
 		break;
 	case Back_2_End_Top_Point:
@@ -1017,6 +1076,18 @@ void ChessMoveStateMachine() {
 		}
 		break;
 	case ChessMove_Finish:
+		q_Feed[0] = Control[0].PositionFeedback;
+		q_Feed[1] = Control[1].PositionFeedback;
+		q_Feed[2] = Control[2].PositionFeedback;
+		q_Feed[3] = Control[3].PositionFeedback;
+		FPK(q_Feed, 269.0f, Pne);
+		Time2MoveDynamic += (sqrt(
+				((SafePose[0] - Pne[0]) * (SafePose[0] - Pne[0]))
+						+ ((SafePose[1] - Pne[1]) * (SafePose[1] - Pne[1]))
+						+ ((SafePose[2] - Pne[2]) * (SafePose[2] - Pne[2]))))
+				* 0.0075;
+
+		JMoveTaskSpace(SafePose, Time2MoveDynamic);
 		Chess_Move_Start_Flag = 0;
 		ChessMoveStates = Chess_idle;
 		break;

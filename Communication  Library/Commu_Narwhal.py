@@ -200,7 +200,9 @@ class Communication:
             False in case can't init uart
         """
         if(self.status):
+            print("in")
             stat, data = self.Write(0xF0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+            print(data)
             return stat
         return False
 

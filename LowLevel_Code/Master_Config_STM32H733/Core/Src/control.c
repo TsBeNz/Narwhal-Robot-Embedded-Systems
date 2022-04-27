@@ -38,12 +38,12 @@ void Step_Driver_init(SteperParameter *step, TIM_HandleTypeDef *htim,
 void Step_Driver(SteperParameter *step, double f_driver) {
 	double abs_f_driver = fabs(f_driver);
 	uint16_t reg_out;
-	if (abs_f_driver <= 5) {
-		reg_out = 20000;
-		step->htim->Instance->ARR = 20000;
+	if (abs_f_driver <= 7) {
+		reg_out = 50000;
+		step->htim->Instance->ARR = 50000;
 		step->htim->Instance->CCR1 = 0;
-	} else if (abs_f_driver < 25) {
-		reg_out = 20000;
+	} else if (abs_f_driver < 10) {
+		reg_out = 50000;
 		step->htim->Instance->ARR = reg_out;
 		step->htim->Instance->CCR1 = reg_out >> 1;
 	} else {
@@ -72,11 +72,11 @@ void Servo_init(ServoParameter *Servo,TIM_HandleTypeDef *htim,
 
 /*
  * Servo Drive Function
- * Deg Range (-90 -> 90)
+ * Deg Range (0 -> 180)
  */
-void Servo_Drive(ServoParameter *Servo,int8_t Deg){
-	uint16_t Pulse_in  =  (uint16_t)(((((int16_t)Deg)+90)*5.55555f) + 999);
-	__HAL_TIM_SET_COMPARE(Servo->htim,Servo->Channel,Deg);
+void Servo_Drive(ServoParameter *Servo,uint8_t Deg){
+	uint16_t Pulse_in  =  (uint16_t)((Deg * 8.3333333f) +499);
+	__HAL_TIM_SET_COMPARE(Servo->htim,Servo->Channel,Pulse_in);
 }
 
 void Traj_Coeff_Cal(TrajParameter *Traj, double T, double Pos_Final,
