@@ -1,0 +1,6 @@
+../Core/Src/TMP75.c:5:6:Tmp75_Init	16	static
+../Core/Src/TMP75.c:14:6:Write_Register	32	static
+../Core/Src/TMP75.c:24:6:Read_Register	32	static
+../Core/Src/TMP75.c:32:6:One_ShotTemp	16	static
+../Core/Src/TMP75.c:37:6:Read_TempCelsius	24	static
+../Core/Src/TMP75.c:45:6:Read_TempEeprom	24	static

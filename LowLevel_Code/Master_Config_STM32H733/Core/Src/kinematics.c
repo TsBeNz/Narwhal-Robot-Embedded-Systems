@@ -18,12 +18,12 @@
  * q[4]				---> JointSpace Position
  *
  */
-Kinematics_StatusTypeDef IPK(float gammabar[3], float chi[3], float q[4]) {
-	float c2;
-	float q2;
-	float q3;
-	float s2;
-	float x24;
+Kinematics_StatusTypeDef IPK(double gammabar[3], double chi[3], double q[4]) {
+	double c2;
+	double q2;
+	double q3;
+	double s2;
+	double x24;
 	x24 = gammabar[1] * sqrt(chi[0] * chi[0] + chi[1] * chi[1]) - 20.0;
 	c2 = x24 * x24
 			+ ((chi[2] + 268.23) - 295.89) * ((chi[2] + 268.23) - 295.89);
@@ -57,17 +57,17 @@ Kinematics_StatusTypeDef IPK(float gammabar[3], float chi[3], float q[4]) {
  *
  */
 
-//Kinematics_StatusTypeDef IVK(float q[3], float chi_dot[3], float qv[4])
+//Kinematics_StatusTypeDef IVK(double q[3], double chi_dot[3], double qv[4])
 
-Kinematics_StatusTypeDef IVK(float q[4], float chi_dot[3], float qv[4])
+Kinematics_StatusTypeDef IVK(double q[4], double chi_dot[3], double qv[4])
 {
-  float Jv4[9];
-  float Jv4_tmp;
-  float Jv4_tmp_tmp;
-  float b_Jv4_tmp;
-  float c_Jv4_tmp;
-  float qvbar_idx_1;
-  float qvbar_idx_2;
+  double Jv4[9];
+  double Jv4_tmp;
+  double Jv4_tmp_tmp;
+  double b_Jv4_tmp;
+  double c_Jv4_tmp;
+  double qvbar_idx_1;
+  double qvbar_idx_2;
   int r1;
   int r2;
   int rtemp;
@@ -129,15 +129,15 @@ Kinematics_StatusTypeDef IVK(float q[4], float chi_dot[3], float qv[4])
  *                double Pne[3]
  * Return Type  : void
  */
-void FPK(float q[5], float l3, float Pne[3]) {
-	float Pne_tmp;
-	float b_Pne_tmp;
-	float c_Pne_tmp;
-	float d_Pne_tmp;
-	float e_Pne_tmp;
-	float f_Pne_tmp;
-	float g_Pne_tmp;
-	float h_Pne_tmp;
+void FPK(double q[5], double l3, double Pne[3]) {
+	double Pne_tmp;
+	double b_Pne_tmp;
+	double c_Pne_tmp;
+	double d_Pne_tmp;
+	double e_Pne_tmp;
+	double f_Pne_tmp;
+	double g_Pne_tmp;
+	double h_Pne_tmp;
 	/* offset */
 	Pne_tmp = cos(q[0]);
 	b_Pne_tmp = sin(q[2]);
@@ -190,16 +190,16 @@ void FPK(float q[5], float l3, float Pne[3]) {
  *                double twist[6]
  * Return Type  : void
  */
-void FVK(float q[4], float qd[4], float l3, float twist[3]) {
-	float b_twist_tmp;
-	float c_twist_tmp;
-	float d_twist_tmp;
-	float e_twist_tmp;
-	float f_twist_tmp;
-	float g_twist_tmp;
-	float twist_tmp;
-	float twist_tmp_tmp;
-	float twist_tmp_tmp_tmp;
+void FVK(double q[4], double qd[4], double l3, double twist[3]) {
+	double b_twist_tmp;
+	double c_twist_tmp;
+	double d_twist_tmp;
+	double e_twist_tmp;
+	double f_twist_tmp;
+	double g_twist_tmp;
+	double twist_tmp;
+	double twist_tmp_tmp;
+	double twist_tmp_tmp_tmp;
 	/*  joint vel */
 	/* offset */
 	/*  l3= 269; */
@@ -235,21 +235,21 @@ void FVK(float q[4], float qd[4], float l3, float twist[3]) {
 			+ qd[2] * (twist_tmp_tmp + twist_tmp)) + g_twist_tmp * d_twist_tmp;
 }
 
-void ChessPose(uint8_t Chess_Index, float Chess_Theta, float ChessPosition[2]) {
+void ChessPose(uint8_t Chess_Index, double Chess_Theta, double ChessPosition[2]) {
 	/*
 	 *
 	 */
-	uint8_t X = Chess_Index%8;
-	uint8_t N = Chess_Index/8;
+	uint8_t X = (Chess_Index%8) + 1;
+	uint8_t N = (Chess_Index/8) + 1;
 
-	float l = 230;
-	float L = 400;
+	double l = 260;
+	double L = 400;
 
-	float b_positionx_tmp;
-	float c_positionx_tmp;
-	float d_positionx_tmp;
-	float e_positionx_tmp;
-	float positionx_tmp;
+	double b_positionx_tmp;
+	double c_positionx_tmp;
+	double d_positionx_tmp;
+	double e_positionx_tmp;
+	double positionx_tmp;
 	positionx_tmp = cos(Chess_Theta);
 	b_positionx_tmp = sin(Chess_Theta);
 	c_positionx_tmp = 9.0 * L / 16.0;
@@ -262,16 +262,16 @@ void ChessPose(uint8_t Chess_Index, float Chess_Theta, float ChessPosition[2]) {
 			+ (e_positionx_tmp - c_positionx_tmp) * b_positionx_tmp;
 }
 
-void FindR(float Offset2Center[2], float ChessPosition[2],
-		float *ChessRadius) {
-	float DeltaX = ChessPosition[0] - Offset2Center[0];
-	float DeltaY = ChessPosition[1] - Offset2Center[1];
+void FindR(double Offset2Center[2], double ChessPosition[2],
+		double *ChessRadius) {
+	double DeltaX = ChessPosition[0] - Offset2Center[0];
+	double DeltaY = ChessPosition[1] - Offset2Center[1];
 	*ChessRadius = sqrt((DeltaX * DeltaX) + (DeltaY * DeltaY));
 }
 
-void FindXYSpeed(float Chess_Theta, float Chess_Omaga, float ChessRadius, float SpeedXY[2]){
-	float SpeedTangent = Chess_Omaga * ChessRadius;
-	float Theta = Chess_Theta + (PI/2);
+void FindXYSpeed(double Chess_Theta, double Chess_Omaga, double ChessRadius, double SpeedXY[2]){
+	double SpeedTangent = Chess_Omaga * ChessRadius;
+	double Theta = Chess_Theta + (PI/2);
 	SpeedXY[0] = SpeedTangent*sin(Theta);
 	SpeedXY[1] = SpeedTangent*cos(Theta);
 }

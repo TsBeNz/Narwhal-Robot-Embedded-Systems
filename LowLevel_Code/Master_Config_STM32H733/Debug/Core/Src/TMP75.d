@@ -1,4 +1,4 @@
-Core/Src/TPM75.o: ../Core/Src/TPM75.c ../Core/Inc/TPM75.h \
+Core/Src/TMP75.o: ../Core/Src/TMP75.c ../Core/Inc/Tmp75.h \
  ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h7xx.h \
  ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h733xx.h \
  ../Drivers/CMSIS/Include/core_cm7.h \
@@ -38,7 +38,7 @@ Core/Src/TPM75.o: ../Core/Src/TPM75.c ../Core/Inc/TPM75.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim_ex.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h
-../Core/Inc/TPM75.h:
+../Core/Inc/Tmp75.h:
 ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h7xx.h:
 ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h733xx.h:
 ../Drivers/CMSIS/Include/core_cm7.h:

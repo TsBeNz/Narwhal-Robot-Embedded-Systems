@@ -35,7 +35,8 @@
 #include "control.h"
 #include "AS5047U.h"
 #include "Neopixel.h"
-#include "TPM75.h"
+//#include "TPM75.h"
+#include "Tmp75.h"
 
 //#include "arm_math.h"
 /* USER CODE END Includes */
@@ -51,12 +52,12 @@
 /*   Module 8-9 Variable Section   */
 
 
-float Z_TopOffset = 300;
-float Z_2GripOffset = 150;
+double Z_TopOffset = 170;
+double Z_2GripOffset = 70;
 
 
-float Temperature;
-float Temp_Calibration;
+double Temperature;
+double Temp_Calibration;
 
 typedef enum
 {
@@ -77,13 +78,15 @@ AS5047U Encoder[4];
 KalmanParameter Kalman[5];
 ControlParameter Control[4];
 SteperParameter Stepper[4];
+ServoParameter Servo[2];
 NeopixelParameter Neopixel;
-TPM75 TempSensor;
 TrajParameter Traj[7]; /* index 0-3 is joint Traj and 4 is Z axis Traj */
 
-float SetPoint_Position[5];
-float SetPoint_Velocity[5];
-float t;
+double TPM75_Temp;
+
+double SetPoint_Position[5];
+double SetPoint_Velocity[5];
+double t;
 
 /*   Flag   */
 uint8_t Contorl_Flag;
@@ -102,21 +105,21 @@ uint8_t ChessIndex[2];
 uint8_t Chess_Move_Start_Flag = 0;
 ChessMoveState ChessMoveStates = Chess_idle;
 
-float tune_PID[2] = {0,0};
-float T_tune_PID = 2;
+double tune_PID[2] = {0,0};
+double T_tune_PID = 2;
 
 
 /*	Jog Variable	*/
-float JointTrajSet[4];
-float TaskTrajSet[3];
+double JointTrajSet[4];
+double TaskTrajSet[3];
 
 uint8_t traj_finish = 0;
-float traj_t_set[4];
-float t,T_Traj;
+double traj_t_set[4];
+double t,T_Traj;
 
-float pos,vel,dt_test,f_out,position_test;
+double pos,vel,dt_test,f_out,position_test;
 uint16_t reg_out;
-float v2freqGain;
+double v2freqGain;
 
 uint8_t Buffer_TPM75[2];
 
@@ -126,13 +129,13 @@ uint8_t Buffer_TPM75[2];
 
 uint8_t Test_traj = 0;
 uint8_t Test_traj2 = 0;
-float Test_traj_Val[4];
-float Time_Live_Ex1 = 2;
-float TaskSpace_Live_Ex1[3] ={0,0,0};
+double Test_traj_Val[4];
+double Time_Live_Ex1 = 2;
+double TaskSpace_Live_Ex1[3] ={0,0,0};
 
 
 /*	ChessMove	*/
-float EndEffectorTarget[3];
+double EndEffectorTarget[3];
 
 /* USER CODE END PD */
 
@@ -159,15 +162,16 @@ uint8_t CRC8(uint8_t *Data,uint8_t BufferLength);
 void SentData(uint8_t range);
 void Narwhal_Protocol();
 void Control_Function();
-void JMoveTaskSpace(float Task2Go[3], float Time2Move);
-void LMoveTaskSpace(float Task2Go[3], float Time2Move);
-void ChessNotMovePathWay(uint8_t Index2Move, float Z_Offset, uint8_t IsJMove);
+void JMoveTaskSpace(double Task2Go[3], double Time2Move);
+void LMoveTaskSpace(double Task2Go[3], double Time2Move);
+void ChessNotMovePathWay(uint8_t Index2Move, double Z_Offset, uint8_t IsJMove);
 void ChessMoveStateMachine();
+double All_Joint_Speed_Avg();
 
 
-//void Joint_Traj(float *Position, float *Velocity);
-//void JointSpaceTraj(float Task2Move[3],float Time2Move);
-//void Chess_Tracker(uint8_t Chess_Index, float Chess_Theta, float Chess_Omega);
+//void Joint_Traj(double *Position, double *Velocity);
+//void JointSpaceTraj(double Task2Move[3],double Time2Move);
+//void Chess_Tracker(uint8_t Chess_Index, double Chess_Theta, double Chess_Omega);
 //void ChessMove1(uint8_t StartIndex, uint8_t EndIndex);
 //uint8_t ChessMove2();
 /* USER CODE END PFP */
@@ -269,17 +273,18 @@ int main(void)
 
 	/*			CascadeControl			*/
 //	CascadeControl_init(&Control[0], 0.6, 0, 0, 15, 0.5, 10, 400);
-//	CascadeControl_init(&Control[1], 0.7, 0, 0.3, 10, 0.1, 5, 430);
-//	CascadeControl_init(&Control[2], 0.7, 0, 0, 10, 0.2, 0, 450);
-//	CascadeControl_init(&Control[3], 0.8, 0.005, 0, 10, 0.1, 3, 470);
+//	CascadeControl_init(&Control[1], 0.7, 0, 0.3, 10, 0, 10, 410);
+//	CascadeControl_init(&Control[2], 0.82, 0, 0.2, 10, 0, 30, 400);
+//	CascadeControl_init(&Control[3], 0.7, 0.001, 0, 9, 0.1, 3, 500);
 
-	CascadeControl_init(&Control[0], 0.6, 0, 0, 15, 0.5, 10, 400);
-	CascadeControl_init(&Control[1], 0.7, 0, 0.3, 10, 0, 10, 410);
-	CascadeControl_init(&Control[2], 0.82, 0, 0.2, 11, 0.13, 3, 445);
-	CascadeControl_init(&Control[3], 0.7, 0.001, 0, 9, 0.1, 3, 500);
+	CascadeControl_init(&Control[0], 0.75, 0, 0, 15, 0.5, 10, 400);
+	CascadeControl_init(&Control[1], 0.5, 0, 0.5, 10, 0, 30, 410);
+	CascadeControl_init(&Control[2], 0.5, 0, 0.3, 25, 0, 30, 800);
+	CascadeControl_init(&Control[3], 0.75, 0, 0.3, 9, 0, 3, 420);
 
 	/*  Power Supply Temperature Sensor */
-	TPM75_init(&TempSensor, &hi2c2, 0, 0, 1);
+//	TPM75_init(&TempSensor, &hi2c2, 0, 0, 1);
+	Tmp75_Init(&hi2c2);
 
 	SetPoint_Position[0] = EncPulse2Rad_Read(&Encoder[0], 1);
 	SetPoint_Position[1] = EncPulse2Rad_Read(&Encoder[1], 0);
@@ -293,11 +298,14 @@ int main(void)
 	/*			Stepper Driver			*/
 	Step_Driver_init(&Stepper[0], &htim13, TIM_CHANNEL_1, GPIOE, GPIO_PIN_0, 500000, 1);
 	Step_Driver_init(&Stepper[1], &htim14, TIM_CHANNEL_1, GPIOE, GPIO_PIN_1, 500000, 0);
-	Step_Driver_init(&Stepper[2], &htim15, TIM_CHANNEL_1, GPIOE, GPIO_PIN_2, 500000, 0);
-	Step_Driver_init(&Stepper[3], &htim16, TIM_CHANNEL_1, GPIOE, GPIO_PIN_3, 500000, 0);
+	Step_Driver_init(&Stepper[2], &htim15, TIM_CHANNEL_1, GPIOE, GPIO_PIN_2, 500000, 1);
+	Step_Driver_init(&Stepper[3], &htim16, TIM_CHANNEL_1, GPIOE, GPIO_PIN_3, 500000, 1);
+
+	/*         	  Servo             */
+	Servo_init(&Servo[0], &htim5, TIM_CHANNEL_1);
+	Servo_init(&Servo[2], &htim5, TIM_CHANNEL_2);
 
 	/*			Trajectory			*/
-
 	Test_traj_Val[0] = 0;
 	Test_traj_Val[1] = 0;
 	Test_traj_Val[2] = 0;
@@ -325,18 +333,18 @@ int main(void)
 		}
 		if (Test_traj2) {
 			Test_traj2 = 0;
-			float TaskSpace_Live_Ex1_ChangeZ[3];
+			double TaskSpace_Live_Ex1_ChangeZ[3];
 			TaskSpace_Live_Ex1_ChangeZ[0] = TaskSpace_Live_Ex1[0];
 			TaskSpace_Live_Ex1_ChangeZ[1] = TaskSpace_Live_Ex1[1];
 			TaskSpace_Live_Ex1_ChangeZ[2] = TaskSpace_Live_Ex1[2] - 100;
 			JMoveTaskSpace(TaskSpace_Live_Ex1_ChangeZ, Time_Live_Ex1);
 		}
 
-	   uint8_t tune_joint = 1;
+	   uint8_t tune_joint = 3;
 	   if (tune_PID[0] != tune_PID[1]){
 		   	tune_PID[1] = tune_PID[0];
 			t = 0;
-			float Joint[4] = {0,0,0,0};
+			double Joint[4] = {0,0,0,0};
 			for (int i = 0; i < 4; i++) {
 				Joint[i] = Control[i].PositionFeedback;
 			}
@@ -360,8 +368,8 @@ int main(void)
 		if (HAL_GetTick() - Software_Timer_100ms >= 10) {
 			Software_Timer_100ms = HAL_GetTick();
 			HAL_ADC_Start_IT(&hadc3); 				//	read temperature sensor
-			HAL_I2C_Mem_Read_IT(&hi2c2, 0x92, 0x00, I2C_MEMADD_SIZE_8BIT,
-					Buffer_TPM75, 2);
+			One_ShotTemp(&hi2c2);
+			Read_TempCelsius(&TPM75_Temp,&hi2c2);
 			ChessMoveStateMachine();
 		}
 
@@ -481,11 +489,11 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
 	if (hadc == &hadc3) {
 		uint32_t ADC_Output = HAL_ADC_GetValue(&hadc3);
-		Temperature = ((Temperature * 9)
+		Temperature = ((Temperature * 19)
 				+ (Temp_Calibration
-						* (float) ((float) ADC_Output
+						* (double) ((double) ADC_Output
 								- *(unsigned short*) (0x1FF1E820)) + 30.0f))
-				/ 10;
+				/ 20;
 	}
 }
 
@@ -509,12 +517,13 @@ inline void Narwhal_Protocol() {
 		if (CRC_Cal == UART5_rxBuffer[13]) {
 			UART5_txBuffer[0] = 0xFF;
 
-			float q_Feed[4];
-			float dq[4];
-			float d_Task[3];
-			float q_in[5] = {0,0,0,0,0};
-			float task[3] = { -500, 300, 50 };
+			double q_Feed[4];
+			double dq[4];
+			double d_Task[3];
+			double q_in[5] = {0,0,0,0,0};
+			double task[3] = { -500, 300, 50 };
 			uint16_t Temperature_Protocol = Temperature * 1000;
+			uint16_t Temperature_Protocol2 = TPM75_Temp * 1000;
 
 			/* 		Data to MCU Start	*/
 			switch (UART5_rxBuffer[1]) {
@@ -552,7 +561,7 @@ inline void Narwhal_Protocol() {
 				/* Joint Jog */
 				t = 0;
 				for (int i = 0; i < 4; i++) {
-					float JointJog = (int16_t) (((UART5_rxBuffer[2 + (2 * i)])
+					double JointJog = (int16_t) (((UART5_rxBuffer[2 + (2 * i)])
 							<< 8) | (UART5_rxBuffer[3 + (2 * i)])) / 1000.0;
 					Traj_Coeff_Cal(&Traj[i], 0.5,
 							JointJog + Control[i].PositionFeedback,
@@ -578,7 +587,7 @@ inline void Narwhal_Protocol() {
 				IVK(q_Feed, d_Task, dq);
 				t = 0;
 				for (int i = 0; i < 3; i++) {
-					float Setpoint = Control[i].PositionFeedback + dq[i];
+					double Setpoint = Control[i].PositionFeedback + dq[i];
 					Traj_Coeff_Cal(&Traj[i], 0.5, Setpoint,
 							Control[i].PositionFeedback, 0,
 							Control[i].VelocityFeedback);
@@ -592,13 +601,15 @@ inline void Narwhal_Protocol() {
 			case 0xFD:
 				/* Joint Set */
 				t = 0;
-				float Joint[4];
-				float T;
+				double Joint[4];
+				double T = 2;
+				double Distance;
 				for (int i = 0; i < 4; i++) {
 					Joint[i] = (int16_t) (((UART5_rxBuffer[2 + (2 * i)]) << 8)
 							| (UART5_rxBuffer[3 + (2 * i)])) / 1000.0;
+					Distance += fabs(Joint[i] - Control[i].PositionFeedback);
 				}
-				T = 0.5;
+				T += (Distance * 0.0075f);
 				for (int i = 0; i < 4; i++) {
 					Traj_Coeff_Cal(&Traj[i], T, Joint[i],
 							Control[i].PositionFeedback, 0,
@@ -614,7 +625,7 @@ inline void Narwhal_Protocol() {
 				/* Cartesian Set */
 				t = 0;
 				for (int i = 0; i < 4; i++) {
-					float JointJog = (int16_t) (((UART5_rxBuffer[2 + (2 * i)])
+					double JointJog = (int16_t) (((UART5_rxBuffer[2 + (2 * i)])
 							<< 8) | (UART5_rxBuffer[3 + (2 * i)])) / 1000.0;
 					Traj_Coeff_Cal(&Traj[i], 0.5,
 							JointJog + Control[i].PositionFeedback,
@@ -706,8 +717,8 @@ inline void Narwhal_Protocol() {
 				/* Temp */
 				UART5_txBuffer[4] = (uint8_t) ((Temperature_Protocol >> 8) & 0xFF);
 				UART5_txBuffer[5] = (uint8_t) (Temperature_Protocol & 0xFF);
-				UART5_txBuffer[6] = (uint8_t) ((Temperature_Protocol >> 8) & 0xFF);
-				UART5_txBuffer[7] = (uint8_t) (Temperature_Protocol & 0xFF);
+				UART5_txBuffer[6] = (uint8_t) ((Temperature_Protocol2 >> 8) & 0xFF);
+				UART5_txBuffer[7] = (uint8_t) (Temperature_Protocol2 & 0xFF);
 
 				/* Joint Current */
 				for (int i = 0; i < 4; i++) {
@@ -753,9 +764,9 @@ inline void Narwhal_Protocol() {
 	HAL_UART_Receive_IT(&huart5, UART5_rxBuffer, 14);
 }
 
-inline void JointSpaceTraj(float Task2Move[3],float Time2Move){
-	float gamma[3] = {1,1,-1};
-	float q_inv[4];
+inline void JointSpaceTraj(double Task2Move[3],double Time2Move){
+	double gamma[3] = {1,1,-1};
+	double q_inv[4];
 	IPK(gamma, Task2Move, q_inv);
 	t = 0;
 	for (int i = 0; i < 4; i++) {
@@ -769,7 +780,7 @@ inline void JointSpaceTraj(float Task2Move[3],float Time2Move){
 
 inline void Control_Function() {
 	/***** Encoder Read *****/
-	float J1, J2, J3, J4;
+	double J1, J2, J3, J4;
 	J1 = EncPulse2Rad_Read(&Encoder[0], 1);
 	J2 = EncPulse2Rad_Read(&Encoder[1], 0);
 	J3 = EncPulse2Rad_Read(&Encoder[2], 0);
@@ -778,7 +789,7 @@ inline void Control_Function() {
 	/***** Joint Space SetPoint Gen *****/
 	if (Chessmove_State == 0) {
 		if (Traj_Flag & 0x0F) {
-			float traj_t_set[5];
+			double traj_t_set[5];
 			traj_t_set[0] = t;
 			traj_t_set[1] = t * t;
 			traj_t_set[2] = traj_t_set[1] * t;
@@ -799,15 +810,15 @@ inline void Control_Function() {
 
 	else if (Chessmove_State == 1) {
 		if (Traj_Flag & 0x0F) {
-			float gamma[3] = { 1, 1, -1 };
-			float Chi_t[3];
-			float ChiDot_t[3];
+			double gamma[3] = { 1, 1, -1 };
+			double Chi_t[3];
+			double ChiDot_t[3];
 
 			//*********** Chi Output ************//
-			float SetPointPosition[4];
-			float SetPointVelocity[4];
+			double SetPointPosition[4];
+			double SetPointVelocity[4];
 
-			float traj_t_set[5];
+			double traj_t_set[5];
 			traj_t_set[0] = t;
 			traj_t_set[1] = t * t;
 			traj_t_set[2] = traj_t_set[1] * t;
@@ -840,9 +851,9 @@ inline void Control_Function() {
 	Step_Driver(&Stepper[3], Control[3].Output);
 }
 
-inline void JMoveTaskSpace(float Task2Go[3], float Time2Move){
-	float gamma[3] = { 1, 1, -1 };
-	float q_inv[4];
+inline void JMoveTaskSpace(double Task2Go[3], double Time2Move){
+	double gamma[3] = { 1, 1, -1 };
+	double q_inv[4];
 	IPK(gamma, Task2Go, q_inv);
 	t = 0;
 	for (int i = 0; i < 4; i++) {
@@ -853,11 +864,11 @@ inline void JMoveTaskSpace(float Task2Go[3], float Time2Move){
 	Chessmove_State = 0;
 }
 
-inline void LMoveTaskSpace(float Task2Go[3], float Time2Move){
-	float q_Feed[4];
-	float qv_Feed[4];
-	float Pne[3];
-	float vPne[3];
+inline void LMoveTaskSpace(double Task2Go[3], double Time2Move){
+	double q_Feed[4];
+	double qv_Feed[4];
+	double Pne[3];
+	double vPne[3];
 	q_Feed[0] = Control[0].PositionFeedback;
 	q_Feed[1] = Control[1].PositionFeedback;
 	q_Feed[2] = Control[2].PositionFeedback;
@@ -877,29 +888,43 @@ inline void LMoveTaskSpace(float Task2Go[3], float Time2Move){
 	Chessmove_State = 1; // Change to TaskSpace Traj
 }
 
-inline void ChessNotMovePathWay(uint8_t Index2Move, float Z_Offset, uint8_t IsJMove) {
+inline void ChessNotMovePathWay(uint8_t Index2Move, double Z_Offset, uint8_t IsJMove) {
 	/***** Encoder Read *****/
-	float BaseEnc;
-	float PositionXY[2];
+	double BaseEnc;
+	double PositionXY[2];
 
 	/***** Base Encoder Read *****/
 //	BaseEnc = BaseENCRead();   //?????????????????????????????????????????????????????????
 	BaseEnc = 0;
 	ChessPose(Index2Move, BaseEnc, PositionXY);
-	float TaskSpace2Go[3];
+	double q_Feed[4];
+	double Pne[3];
+	q_Feed[0] = Control[0].PositionFeedback;
+	q_Feed[1] = Control[1].PositionFeedback;
+	q_Feed[2] = Control[2].PositionFeedback;
+	q_Feed[3] = Control[3].PositionFeedback;
+
+	FPK(q_Feed, 269.0f, Pne);
+	double Time2MoveDynamic = 1.3;
+	Time2MoveDynamic += (sqrt(
+			((PositionXY[0] - Pne[0]) * (PositionXY[0] - Pne[0]))
+					+ ((PositionXY[1] - Pne[1]) * (PositionXY[1] - Pne[1])))) * 0.0075;
+
+	double TaskSpace2Go[3];
 	TaskSpace2Go[0] = PositionXY[0];
 	TaskSpace2Go[1] = PositionXY[1];
 	TaskSpace2Go[2] = Z_Offset;
 	if (IsJMove){
-		JMoveTaskSpace(TaskSpace2Go, 2);
+		JMoveTaskSpace(TaskSpace2Go, Time2MoveDynamic);
 	}
 	else{
-		JMoveTaskSpace(TaskSpace2Go, 2);
+		JMoveTaskSpace(TaskSpace2Go, 3);
 	}
 }
 
 void ChessMoveStateMachine() {
 	static uint8_t ChangeState = 0;
+	double Speed_Error = 0.05;
 	switch (ChessMoveStates) {
 	case Chess_idle:
 		if (Chess_Move_Start_Flag) {
@@ -912,8 +937,10 @@ void ChessMoveStateMachine() {
 			ChangeState = 0;
 		}
 		if (!Traj_Flag) {
-			ChessMoveStates = Move_2_Start_Grip_Point;
-			ChangeState = 1;
+			if(All_Joint_Speed_Avg() <= Speed_Error){
+				ChessMoveStates = Move_2_Start_Grip_Point;
+				ChangeState = 1;
+			}
 		}
 		break;
 	case Move_2_Start_Grip_Point:
@@ -922,8 +949,10 @@ void ChessMoveStateMachine() {
 			ChangeState = 0;
 		}
 		if (!Traj_Flag) {
-			ChessMoveStates = Move_2_Start_Point_and_Griping;
-			ChangeState = 1;
+			if (All_Joint_Speed_Avg() <= Speed_Error) {
+				ChessMoveStates = Move_2_Start_Point_and_Griping;
+				ChangeState = 1;
+			}
 		}
 		break;
 	case Move_2_Start_Point_and_Griping:
@@ -937,8 +966,10 @@ void ChessMoveStateMachine() {
 			ChangeState = 0;
 		}
 		if (!Traj_Flag) {
-			ChessMoveStates = Move_2_End_Top_Point;
-			ChangeState = 1;
+			if (All_Joint_Speed_Avg() <= Speed_Error) {
+				ChessMoveStates = Move_2_End_Top_Point;
+				ChangeState = 1;
+			}
 		}
 		break;
 
@@ -950,8 +981,10 @@ void ChessMoveStateMachine() {
 			ChangeState = 0;
 		}
 		if (!Traj_Flag) {
-			ChessMoveStates = Move_2_End_Ungrip_Point;
-			ChangeState = 1;
+			if (All_Joint_Speed_Avg() <= Speed_Error) {
+				ChessMoveStates = Move_2_End_Ungrip_Point;
+				ChangeState = 1;
+			}
 		}
 		break;
 	case Move_2_End_Ungrip_Point:
@@ -960,8 +993,10 @@ void ChessMoveStateMachine() {
 			ChangeState = 0;
 		}
 		if (!Traj_Flag) {
-			ChessMoveStates = Move_2_End_Point_and_Ungriping;
-			ChangeState = 1;
+			if (All_Joint_Speed_Avg() <= Speed_Error) {
+				ChessMoveStates = Move_2_End_Point_and_Ungriping;
+				ChangeState = 1;
+			}
 		}
 		break;
 	case Move_2_End_Point_and_Ungriping:
@@ -975,8 +1010,10 @@ void ChessMoveStateMachine() {
 			ChangeState = 0;
 		}
 		if (!Traj_Flag) {
-			ChessMoveStates = ChessMove_Finish;
-			ChangeState = 1;
+			if (All_Joint_Speed_Avg() <= Speed_Error) {
+				ChessMoveStates = ChessMove_Finish;
+				ChangeState = 1;
+			}
 		}
 		break;
 	case ChessMove_Finish:
@@ -988,20 +1025,28 @@ void ChessMoveStateMachine() {
 	}
 }
 
-//void Chess_Tracker(uint8_t Chess_Index, float Chess_Theta, float Chess_Omega){
+double All_Joint_Speed_Avg(){
+	double Buf;
+	for (int i=4;i<4;i++){
+		Buf += fabs(Control[i].VelocityFeedback);
+	}
+	return Buf/4.0f;
+}
+
+//void Chess_Tracker(uint8_t Chess_Index, double Chess_Theta, double Chess_Omega){
 //	/*
 //	 * Offset2Center = robot to chess board center
 //	 */
-//	float Offset2Center[2] = {300,0};
+//	double Offset2Center[2] = {300,0};
 //	/*
 //	 * Output
 //	 *
 //	 */
-//	float ChessPosition[2];
-//	float ChessVelocity[2];
+//	double ChessPosition[2];
+//	double ChessVelocity[2];
 //
-//	float ChessRadius;
-//	float TzOnly = 3;
+//	double ChessRadius;
+//	double TzOnly = 3;
 //    uint8_t X = Chess_Index%8;
 //    uint8_t N = Chess_Index/8;
 //
@@ -1020,9 +1065,9 @@ void ChessMoveStateMachine() {
 //			      EndEffectorNow, 0, 0); /* Cal C for Trajz*/
 //	Trajz_Flag = 1;
 //	if (Chessmove_State == 1 && Trajz_Flag == 1) { /* Let do while in check position state and have Cal Coeff Z*/
-//		float traj_t_set[5];
-//		float TaskZ_Position = 0;
-//		float TaskZ_Velocity = 0;
+//		double traj_t_set[5];
+//		double TaskZ_Position = 0;
+//		double TaskZ_Velocity = 0;
 //		traj_t_set[0] = t;
 //		traj_t_set[1] = t * t;
 //		traj_t_set[2] = traj_t_set[1] * t;
@@ -1037,11 +1082,11 @@ void ChessMoveStateMachine() {
 //	t += 0.005;
 //
 //    // Transfer to Joint
-//	float EndEffectorgoal[3];
+//	double EndEffectorgoal[3];
 //	EndEffectorgoal[0] = ChessPosition[0];
 //	EndEffectorgoal[1] = ChessPosition[1];
 //	EndEffectorgoal[2] = TaskZ_Position;
-//	float gamma[3] = { 1, 1, -1 };
+//	double gamma[3] = { 1, 1, -1 };
 //	IPK(gamma, EndEffectorgoal, SetPoint_Position);
 //	d_Task[0] = ChessVelocity[0];
 //	d_Task[1] = ChessVelocity[1];
@@ -1051,23 +1096,23 @@ void ChessMoveStateMachine() {
 //}
 
 //void ChessMove1(uint8_t StartIndex, uint8_t EndIndex){
-//	float Z_Top_Offset = 200;
+//	double Z_Top_Offset = 200;
 //
-//	float EndEffectorNow[3];
-//	float EndEffectorAtChess[2];
-//	float q_in[5];
+//	double EndEffectorNow[3];
+//	double EndEffectorAtChess[2];
+//	double q_in[5];
 //
 //	for (int i = 0; i < 4; i++) {
 //		q_in[i] = Control[i].PositionFeedback;
 //	}
 //	ChessPose(StartIndex, Kalman[4].x1, EndEffectorAtChess);
 //	FPK(q_in, 269.0f, EndEffectorNow);
-//	float DeltaX = EndEffectorNow[0] - EndEffectorAtChess[0];
-//	float DeltaY = EndEffectorNow[1] - EndEffectorAtChess[1];
-//	float DeltaZ = EndEffectorNow[2] - Z_Top_Offset;
-//	float Distance = sqrt(
+//	double DeltaX = EndEffectorNow[0] - EndEffectorAtChess[0];
+//	double DeltaY = EndEffectorNow[1] - EndEffectorAtChess[1];
+//	double DeltaZ = EndEffectorNow[2] - Z_Top_Offset;
+//	double Distance = sqrt(
 //			(DeltaX * DeltaX) + (DeltaY * DeltaY) + (DeltaZ * DeltaZ));
-//	float T2Move = (Distance / 150.0f) + 1;
+//	double T2Move = (Distance / 150.0f) + 1;
 //
 ////	/*
 ////	 * Traj Z Axis
@@ -1077,7 +1122,7 @@ void ChessMoveStateMachine() {
 ////			EndEffectorNow, 0, 0); /* Cal C for Trajz*/
 ////	Trajz_Flag = 1;
 ////	if (Chessmove_State == 1 && Trajz_Flag == 1) { /* Let do while in check position state and have Cal Coeff Z*/
-////		float traj_t_set[5];
+////		double traj_t_set[5];
 ////		traj_t_set[0] = t;
 ////		traj_t_set[1] = t * t;
 ////		traj_t_set[2] = traj_t_set[1] * t;
@@ -1095,12 +1140,12 @@ void ChessMoveStateMachine() {
 //	 * Traj 2 Move XY
 //	 */
 //
-//	float EndEffectorTarget[3];
+//	double EndEffectorTarget[3];
 //	EndEffectorTarget[2] = Z_Top_Offset;
 //	ChessPose(StartIndex, Kalman[4].x1 + (T2Move * (Kalman[4].x2)) , EndEffectorTarget);
 //
-//	float gamma[3] = { 1, 1, -1 };
-//	float q_inv[4];
+//	double gamma[3] = { 1, 1, -1 };
+//	double q_inv[4];
 //	IPK(gamma, EndEffectorTarget, q_inv);
 //	t = 0;
 //	for (int i = 0; i < 4; i++) {
@@ -1113,8 +1158,8 @@ void ChessMoveStateMachine() {
 //}
 //
 //uint8_t ChessMove2() {
-//	float EndEffectorNow[3];
-//	float q_now[5];
+//	double EndEffectorNow[3];
+//	double q_now[5];
 //	for (int i = 0; i < 4; i++) {
 //		q_now[i] = Control[i].PositionFeedback;
 //	}
@@ -1132,6 +1177,9 @@ void ChessMoveStateMachine() {
 //	}
 //	return 0;
 //}
+
+
+
 /* USER CODE END 4 */
 
 /**

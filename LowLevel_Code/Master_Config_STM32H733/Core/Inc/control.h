@@ -36,62 +36,62 @@ typedef struct {
 
 /* KalmanFilter Variable */
 typedef struct {
-	float Q; 			// Adjustable
-	float R; 			// Adjustable
-	float x1;			// Estimate Position
-	float x2;			// Estimate Velocity
-	float p11;
-	float p12;
-	float p21;
-	float p22;
+	double Q; 			// Adjustable
+	double R; 			// Adjustable
+	double x1;			// Estimate Position
+	double x2;			// Estimate Velocity
+	double p11;
+	double p12;
+	double p21;
+	double p22;
 }KalmanParameter;
 
 
 typedef struct {
-	float Kp;
-	float Ki;
-	float Kd;
-	float ITerm;
-	float Setpoint;
-	float Feedback;
-	float Error[2];		//Error[0] -> Error @ t , Error[1] = -> Error @ t-1
-	float Output;
+	double Kp;
+	double Ki;
+	double Kd;
+	double ITerm;
+	double Setpoint;
+	double Feedback;
+	double Error[2];		//Error[0] -> Error @ t , Error[1] = -> Error @ t-1
+	double Output;
 }PIDParameter;
 
 
 typedef struct {
 	PIDParameter Pos;
-	float PositionSetpoint; 				/* Rad	  Input */
-	float PositionFeedback;					/* Position */
-	float PositionPIDOutput;
+	double PositionSetpoint; 				/* Rad	  Input */
+	double PositionFeedback;					/* Position */
+	double PositionPIDOutput;
 	PIDParameter Vel;
-	float VelocitySetpoint; 				/* Rad/s  Input (Command Velocity For Feed Forward) */
-	float SumVelocityFeedForward;           /* Rad/s  Input (sum of output position control and velocity feedforward) */
-	float VelocityFeedback;					/* Velocity Output form State Estimator(Kaman Filter)*/
-	float VelocityPIDOutput;
-	float Vel_Gfeed;						/* Velocity Feedforward Gain */
-	float Output;
+	double VelocitySetpoint; 				/* Rad/s  Input (Command Velocity For Feed Forward) */
+	double SumVelocityFeedForward;           /* Rad/s  Input (sum of output position control and velocity feedforward) */
+	double VelocityFeedback;					/* Velocity Output form State Estimator(Kaman Filter)*/
+	double VelocityPIDOutput;
+	double Vel_Gfeed;						/* Velocity Feedforward Gain */
+	double Output;
 } ControlParameter;
 
 typedef struct {
-	float TrajCoef[6]; 			// Adjustable
-	float T; 					// Adjustable
+	double TrajCoef[6]; 			// Adjustable
+	double T; 					// Adjustable
 }TrajParameter;
 
 
-void Traj_Coeff_Cal(TrajParameter *Traj, float T, float Pos_Final, float Pos_Now, float Vel_Final, float Vel_Now);
-void TrajFollow(TrajParameter *Traj, float traj_t[5], float *Position, float *Velocity);
+void Traj_Coeff_Cal(TrajParameter *Traj, double T, double Pos_Final, double Pos_Now, double Vel_Final, double Vel_Now);
+void TrajFollow(TrajParameter *Traj, double traj_t[5], double *Position, double *Velocity);
 
 void Step_Driver_init(SteperParameter *step, TIM_HandleTypeDef *htim, uint32_t Channel, GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, uint32_t f_timer,uint8_t DIR_init);
-void Step_Driver(SteperParameter *step, float f_driver);
+void Step_Driver(SteperParameter *step, double f_driver);
 void Servo_init(ServoParameter *Servo,TIM_HandleTypeDef *htim, uint32_t Channel);
 void Servo_Drive(ServoParameter *Servo,int8_t Deg);
 void Kalman_init(KalmanParameter *kalman, double Q, double R);
 void KalmanFilter(KalmanParameter *kalman ,double theta_k);
-float BaseENCRead();
-void PID_init(PIDParameter *PID, float Kp, float Ki, float Kd);
-float PID_Control(PIDParameter *PID,float Setpoint,float Feedback);
-void CascadeControl_init(ControlParameter *Control,float PosP,float PosI,float PosD,float VelP,float VelI,float VelD, float GFeed);
-void CascadeControl(ControlParameter *Control, KalmanParameter *kalman,	float Pos_Feed, float pos_set, float vel_set);
+double BaseENCRead();
+void PID_init(PIDParameter *PID, double Kp, double Ki, double Kd);
+double PID_Control(PIDParameter *PID,double Setpoint,double Feedback);
+void CascadeControl_init(ControlParameter *Control,double PosP,double PosI,double PosD,double VelP,double VelI,double VelD, double GFeed);
+void CascadeControl(ControlParameter *Control, KalmanParameter *kalman,	double Pos_Feed, double pos_set, double vel_set);
 
 #endif /* INC_CONTROL_H_ */

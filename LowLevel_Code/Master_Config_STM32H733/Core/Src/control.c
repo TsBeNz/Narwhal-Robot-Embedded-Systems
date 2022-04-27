@@ -35,8 +35,8 @@ void Step_Driver_init(SteperParameter *step, TIM_HandleTypeDef *htim,
 }
 
 
-void Step_Driver(SteperParameter *step, float f_driver) {
-	float abs_f_driver = fabs(f_driver);
+void Step_Driver(SteperParameter *step, double f_driver) {
+	double abs_f_driver = fabs(f_driver);
 	uint16_t reg_out;
 	if (abs_f_driver <= 5) {
 		reg_out = 20000;
@@ -79,16 +79,16 @@ void Servo_Drive(ServoParameter *Servo,int8_t Deg){
 	__HAL_TIM_SET_COMPARE(Servo->htim,Servo->Channel,Deg);
 }
 
-void Traj_Coeff_Cal(TrajParameter *Traj, float T, float Pos_Final,
-  float Pos_Now, float Vel_Final, float Vel_Now) {
+void Traj_Coeff_Cal(TrajParameter *Traj, double T, double Pos_Final,
+  double Pos_Now, double Vel_Final, double Vel_Now) {
  Traj->T = T;
- float T_P2 = T * T;
- float T_P3 = T_P2 * T;
- float T_P4 = T_P3 * T;
- float T_P5 = T_P4 * T;
- float ds = Pos_Now - Pos_Final;
- float tfv0 = T * Vel_Now;
- float tfv1 = T * Vel_Final;
+ double T_P2 = T * T;
+ double T_P3 = T_P2 * T;
+ double T_P4 = T_P3 * T;
+ double T_P5 = T_P4 * T;
+ double ds = Pos_Now - Pos_Final;
+ double tfv0 = T * Vel_Now;
+ double tfv1 = T * Vel_Final;
  Traj->TrajCoef[0] = Pos_Now;
  Traj->TrajCoef[1] = Vel_Now;
  Traj->TrajCoef[3] = -(2 * (5 * ds + 3 * tfv0 + 2*tfv1)) / T_P3;
@@ -96,8 +96,8 @@ void Traj_Coeff_Cal(TrajParameter *Traj, float T, float Pos_Final,
  Traj->TrajCoef[5] = -(3 * (2 * ds + tfv0 + tfv1)) / T_P5;
 }
 
-void TrajFollow(TrajParameter *Traj, float traj_t[5], float *Position,
-		float *Velocity) {
+void TrajFollow(TrajParameter *Traj, double traj_t[5], double *Position,
+		double *Velocity) {
 	*Position = Traj->TrajCoef[0] + (Traj->TrajCoef[1] * traj_t[0])
 			+ (Traj->TrajCoef[3] * traj_t[2]) + (Traj->TrajCoef[4] * traj_t[3])
 			+ (Traj->TrajCoef[5] * traj_t[4]);
@@ -173,11 +173,11 @@ void KalmanFilter(KalmanParameter *kalman ,double theta_k) {
 	kalman->p22 = pp22;
 }
 
-float BaseENCRead(){
+double BaseENCRead(){
 	return 970.0f;  //fsaldfkjas;dflkjas;dflksjf;asdf
 }
 
-void PID_init(PIDParameter *PID, float Kp, float Ki, float Kd) {
+void PID_init(PIDParameter *PID, double Kp, double Ki, double Kd) {
 	PID->Kp = Kp;
 	PID->Ki = Ki;
 	PID->Kd = Kd;
@@ -189,7 +189,7 @@ void PID_init(PIDParameter *PID, float Kp, float Ki, float Kd) {
 	PID->Output = 0;
 }
 
-float PID_Control(PIDParameter *PID,float Setpoint,float Feedback){
+double PID_Control(PIDParameter *PID,double Setpoint,double Feedback){
 	PID->Feedback = Feedback; 	// Feedback Input
 	PID->Setpoint = Setpoint;	// Setpoint Input
 	PID->Error[0] = PID->Setpoint - PID->Feedback;
@@ -201,7 +201,7 @@ float PID_Control(PIDParameter *PID,float Setpoint,float Feedback){
 }
 
 
-void CascadeControl_init(ControlParameter *Control,float PosP,float PosI,float PosD,float VelP,float VelI,float VelD, float GFeed){
+void CascadeControl_init(ControlParameter *Control,double PosP,double PosI,double PosD,double VelP,double VelI,double VelD, double GFeed){
 	PID_init(&Control->Pos,PosP,PosI,PosD);
 	PID_init(&Control->Vel,VelP,VelI,VelD);
 	Control->Vel_Gfeed = GFeed;
@@ -209,7 +209,7 @@ void CascadeControl_init(ControlParameter *Control,float PosP,float PosI,float P
 
 
 void CascadeControl(ControlParameter *Control, KalmanParameter *kalman,
-		float Pos_Feed, float pos_set, float vel_set) {
+		double Pos_Feed, double pos_set, double vel_set) {
 	/*Set Setpoint*/
 	Control->PositionSetpoint = pos_set;
 	Control->VelocitySetpoint = vel_set;

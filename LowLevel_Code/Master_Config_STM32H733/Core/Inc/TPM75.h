@@ -16,7 +16,7 @@ typedef struct {
 	uint8_t address;
 	uint8_t Resolution;
 	int16_t RawTemp;
-	float Temp;
+	double Temp;
 } TPM75;
 
 void TPM75_init(TPM75 *dev, I2C_HandleTypeDef *i2cHandle, uint8_t A2, uint8_t A1, uint8_t A0);

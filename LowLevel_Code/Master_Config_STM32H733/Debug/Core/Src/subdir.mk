@@ -6,9 +6,10 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../Core/Src/AS5047U.c \
+../Core/Src/MyTPM75.c \
 ../Core/Src/Neopixel.c \
 ../Core/Src/Potocol.c \
-../Core/Src/TPM75.c \
+../Core/Src/TMP75.c \
 ../Core/Src/adc.c \
 ../Core/Src/control.c \
 ../Core/Src/crc.c \
@@ -28,9 +29,10 @@ C_SRCS += \
 
 OBJS += \
 ./Core/Src/AS5047U.o \
+./Core/Src/MyTPM75.o \
 ./Core/Src/Neopixel.o \
 ./Core/Src/Potocol.o \
-./Core/Src/TPM75.o \
+./Core/Src/TMP75.o \
 ./Core/Src/adc.o \
 ./Core/Src/control.o \
 ./Core/Src/crc.o \
@@ -50,9 +52,10 @@ OBJS += \
 
 C_DEPS += \
 ./Core/Src/AS5047U.d \
+./Core/Src/MyTPM75.d \
 ./Core/Src/Neopixel.d \
 ./Core/Src/Potocol.d \
-./Core/Src/TPM75.d \
+./Core/Src/TMP75.d \
 ./Core/Src/adc.d \
 ./Core/Src/control.d \
 ./Core/Src/crc.d \
@@ -78,7 +81,7 @@ Core/Src/%.o Core/Src/%.su: ../Core/Src/%.c Core/Src/subdir.mk
 clean: clean-Core-2f-Src
 
 clean-Core-2f-Src:
-	-$(RM) ./Core/Src/AS5047U.d ./Core/Src/AS5047U.o ./Core/Src/AS5047U.su ./Core/Src/Neopixel.d ./Core/Src/Neopixel.o ./Core/Src/Neopixel.su ./Core/Src/Potocol.d ./Core/Src/Potocol.o ./Core/Src/Potocol.su ./Core/Src/TPM75.d ./Core/Src/TPM75.o ./Core/Src/TPM75.su ./Core/Src/adc.d ./Core/Src/adc.o ./Core/Src/adc.su ./Core/Src/control.d ./Core/Src/control.o ./Core/Src/control.su ./Core/Src/crc.d ./Core/Src/crc.o ./Core/Src/crc.su ./Core/Src/dma.d ./Core/Src/dma.o ./Core/Src/dma.su ./Core/Src/gpio.d ./Core/Src/gpio.o ./Core/Src/gpio.su ./Core/Src/i2c.d ./Core/Src/i2c.o ./Core/Src/i2c.su ./Core/Src/kinematics.d ./Core/Src/kinematics.o ./Core/Src/kinematics.su ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/spi.d ./Core/Src/spi.o ./Core/Src/spi.su ./Core/Src/stm32h7xx_hal_msp.d ./Core/Src/stm32h7xx_hal_msp.o ./Core/Src/stm32h7xx_hal_msp.su ./Core/Src/stm32h7xx_it.d ./Core/Src/stm32h7xx_it.o ./Core/Src/stm32h7xx_it.su ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32h7xx.d ./Core/Src/system_stm32h7xx.o ./Core/Src/system_stm32h7xx.su ./Core/Src/tim.d ./Core/Src/tim.o ./Core/Src/tim.su ./Core/Src/usart.d ./Core/Src/usart.o ./Core/Src/usart.su
+	-$(RM) ./Core/Src/AS5047U.d ./Core/Src/AS5047U.o ./Core/Src/AS5047U.su ./Core/Src/MyTPM75.d ./Core/Src/MyTPM75.o ./Core/Src/MyTPM75.su ./Core/Src/Neopixel.d ./Core/Src/Neopixel.o ./Core/Src/Neopixel.su ./Core/Src/Potocol.d ./Core/Src/Potocol.o ./Core/Src/Potocol.su ./Core/Src/TMP75.d ./Core/Src/TMP75.o ./Core/Src/TMP75.su ./Core/Src/adc.d ./Core/Src/adc.o ./Core/Src/adc.su ./Core/Src/control.d ./Core/Src/control.o ./Core/Src/control.su ./Core/Src/crc.d ./Core/Src/crc.o ./Core/Src/crc.su ./Core/Src/dma.d ./Core/Src/dma.o ./Core/Src/dma.su ./Core/Src/gpio.d ./Core/Src/gpio.o ./Core/Src/gpio.su ./Core/Src/i2c.d ./Core/Src/i2c.o ./Core/Src/i2c.su ./Core/Src/kinematics.d ./Core/Src/kinematics.o ./Core/Src/kinematics.su ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/spi.d ./Core/Src/spi.o ./Core/Src/spi.su ./Core/Src/stm32h7xx_hal_msp.d ./Core/Src/stm32h7xx_hal_msp.o ./Core/Src/stm32h7xx_hal_msp.su ./Core/Src/stm32h7xx_it.d ./Core/Src/stm32h7xx_it.o ./Core/Src/stm32h7xx_it.su ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32h7xx.d ./Core/Src/system_stm32h7xx.o ./Core/Src/system_stm32h7xx.su ./Core/Src/tim.d ./Core/Src/tim.o ./Core/Src/tim.su ./Core/Src/usart.d ./Core/Src/usart.o ./Core/Src/usart.su
 
 .PHONY: clean-Core-2f-Src
 

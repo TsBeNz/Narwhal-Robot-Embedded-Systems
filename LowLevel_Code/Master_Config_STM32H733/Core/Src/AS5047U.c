@@ -7,7 +7,7 @@
 
 #include "AS5047U.h"
 
-float EncPulse2Rad_Read(AS5047U *Enc,uint8_t inv_dir){
+double EncPulse2Rad_Read(AS5047U *Enc,uint8_t inv_dir){
 	AS5047U_Position_Highspeed_Read(Enc,inv_dir);
 	return (Enc->Position * 0.000383495f) - Enc->Offset;
 //	return (Enc->Position * 0.000383495f);
@@ -15,7 +15,7 @@ float EncPulse2Rad_Read(AS5047U *Enc,uint8_t inv_dir){
 
 void AS5047U_init(AS5047U *dev, SPI_HandleTypeDef *hspiHandle,
 		GPIO_TypeDef *CSGPIOTypedef, CRC_HandleTypeDef *hcrcHandle,
-		uint16_t CSGPIOPin,float offset) {
+		uint16_t CSGPIOPin,double offset) {
 	dev->hspiHandle = hspiHandle;
 	dev->hcrcHandle = hcrcHandle;
 	dev->CSGPIOTypedef = CSGPIOTypedef;

@@ -1,4 +1,4 @@
-../Core/Src/AS5047U.c:10:7:EncPulse2Rad_Read	16	static
+../Core/Src/AS5047U.c:10:8:EncPulse2Rad_Read	16	static
 ../Core/Src/AS5047U.c:16:6:AS5047U_init	32	static
 ../Core/Src/AS5047U.c:64:13:AS5047U_Write	24	static
 ../Core/Src/AS5047U.c:84:26:AS5047U_Read	32	static

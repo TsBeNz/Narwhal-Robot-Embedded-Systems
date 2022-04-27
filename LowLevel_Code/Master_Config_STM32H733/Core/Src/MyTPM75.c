@@ -21,7 +21,7 @@ HAL_StatusTypeDef TPM75_TempRead(TPM75 *dev) {
 	HAL_StatusTypeDef Status_Buffer = HAL_I2C_Mem_Read(dev->i2cHandle, dev->address, 0x00,
 	I2C_MEMADD_SIZE_8BIT, Buffer, 2, 100);
 	dev->RawTemp = (uint16_t)Buffer[1] | (uint16_t)Buffer[0] << 8;
-	dev->Temp = (float)(dev->RawTemp)*(dev->Resolution);
+	dev->Temp = (double)(dev->RawTemp)*(dev->Resolution);
 	return Status_Buffer;
 }
 
