@@ -71,6 +71,7 @@ typedef enum
 	Back_2_Start_Top_Point,
 	Move_2_End_Top_Point,
 	Move_2_End_Ungrip_Point,
+	Move_2_End_Remove_Point_and_Ungriping,
 	Move_2_End_Point_and_Ungriping,
 	Back_2_End_Top_Point,
 	ChessMove_Finish,
@@ -107,6 +108,7 @@ uint32_t Software_Timer_100ms;
 
 uint8_t UART5_rxBuffer[14] __attribute__((section("RAM_D2"))) = {0};
 uint8_t UART5_txBuffer[45] __attribute__((section("RAM_D2"))) = {0};
+uint8_t Comunication_Heartbeat = 0;
 uint8_t ChessIndex[2];
 float ChessHight;
 uint8_t Chess_Move_Start_Flag = 0;
@@ -171,16 +173,10 @@ void Narwhal_Protocol();
 void Control_Function();
 void JMoveTaskSpace(double Task2Go[3], double Time2Move);
 void LMoveTaskSpace(double Task2Go[3], double Time2Move);
-void ChessNotMovePathWay(uint8_t Index2Move, double Z_Offset, uint8_t IsJMove);
+void ChessNotMovePathWay(uint8_t Index2Move, double Z_Offset, uint8_t IsJMove, uint8_t IsRemove);
 void ChessMoveStateMachine();
 double All_Joint_Speed_Avg();
 
-
-//void Joint_Traj(double *Position, double *Velocity);
-//void JointSpaceTraj(double Task2Move[3],double Time2Move);
-//void Chess_Tracker(uint8_t Chess_Index, double Chess_Theta, double Chess_Omega);
-//void ChessMove1(uint8_t StartIndex, uint8_t EndIndex);
-//uint8_t ChessMove2();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -245,18 +241,22 @@ int main(void)
   MX_ADC2_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  	MX_DMA_Init();
+
+	MX_DMA_Init();
 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_6, 1);	// LVDS EN
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_6, 1);	// Level Shifter EN
 
-	Temp_Calibration = (110.0 - 30.0)	/ (*(unsigned short*) (0x1FF1E840) - *(unsigned short*) (0x1FF1E820));
+	Temp_Calibration =
+			(110.0 - 30.0)
+					/ (*(unsigned short*) (0x1FF1E840)
+							- *(unsigned short*) (0x1FF1E820));
 	HAL_ADCEx_Calibration_Start(&hadc3, ADC_CALIB_OFFSET, ADC_SINGLE_ENDED);
 
 	/*			   Encoder				*/
-	AS5047U_init(&Encoder[0], &hspi3, GPIOD, &hcrc, GPIO_PIN_0,6500);
-	AS5047U_init(&Encoder[1], &hspi3, GPIOD, &hcrc, GPIO_PIN_1,10100);
-	AS5047U_init(&Encoder[2], &hspi3, GPIOD, &hcrc, GPIO_PIN_2,3165);
-	AS5047U_init(&Encoder[3], &hspi3, GPIOD, &hcrc, GPIO_PIN_3,6970);
+	AS5047U_init(&Encoder[0], &hspi3, GPIOD, &hcrc, GPIO_PIN_0, 6500);
+	AS5047U_init(&Encoder[1], &hspi3, GPIOD, &hcrc, GPIO_PIN_1, 10100);
+	AS5047U_init(&Encoder[2], &hspi3, GPIOD, &hcrc, GPIO_PIN_2, 3165);
+	AS5047U_init(&Encoder[3], &hspi3, GPIOD, &hcrc, GPIO_PIN_3, 6970);
 
 	HAL_Delay(50);
 
@@ -281,14 +281,12 @@ int main(void)
 //	CascadeControl_init(&Control[1], 0.7, 0, 0.3, 10, 0, 10, 410);
 //	CascadeControl_init(&Control[2], 0.82, 0, 0.2, 10, 0, 30, 400);
 //	CascadeControl_init(&Control[3], 0.7, 0.001, 0, 9, 0.1, 3, 500);
-
 	CascadeControl_init(&Control[0], 0.75, 0, 0, 15, 0.5, 10, 400);
 	CascadeControl_init(&Control[1], 0.5, 0, 0.5, 10, 0, 30, 410);
 	CascadeControl_init(&Control[2], 0.5, 0, 0.3, 25, 0, 30, 800);
 	CascadeControl_init(&Control[3], 0.75, 0, 0.3, 9, 0, 3, 420);
 
 	/*  Power Supply Temperature Sensor */
-//	TPM75_init(&TempSensor, &hi2c2, 0, 0, 1);
 	Tmp75_Init(&hi2c2);
 
 	SetPoint_Position[0] = EncPulse2Rad_Read(&Encoder[0], 1);
@@ -319,6 +317,14 @@ int main(void)
 	Test_traj_Val[3] = 0;
 	Traj_Flag = 0;
 	t = 0;
+
+	/*   RGB LED   */
+	Neopixel_Init(&Neopixel, &htim1, TIM_CHANNEL_1);
+	Neopixel_Set(&Neopixel, 0, 255, 0, 0);
+	Neopixel_Set(&Neopixel, 1, 0, 255, 0);
+	Neopixel_Set(&Neopixel, 2, 0, 0, 255);
+	Neopixel_Sent(&Neopixel);
+
 
 	HAL_TIM_Base_Start_IT(&htim23);   // Start Control Timer
 	HAL_UART_Receive_IT(&huart5, UART5_rxBuffer, 14);
@@ -385,7 +391,14 @@ int main(void)
 
 		if (HAL_GetTick() - Software_Timer_1s >= 1000) {		// 	Update System Status
 			Software_Timer_1s = HAL_GetTick();
-			HAL_GPIO_TogglePin(LED1_GPIO_Port, LED2_Pin);
+			HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
+			if (Comunication_Heartbeat == 0){
+				HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, 1);
+			}
+			else{
+				Comunication_Heartbeat -= 1;
+				HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, 0);
+			}
 		}
 	}
   /* USER CODE END 3 */
@@ -493,7 +506,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 }
 
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
-	HAL_TIM_PWM_Stop_DMA(Neopixel.htim, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Stop_DMA(&htim1, TIM_CHANNEL_1);
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
@@ -526,6 +539,7 @@ inline void Narwhal_Protocol() {
 		uint8_t CRC_Cal = CRC8(UART5_rxBuffer, 13);
 		if (CRC_Cal == UART5_rxBuffer[13]) {
 			UART5_txBuffer[0] = 0xFF;
+			Comunication_Heartbeat = 2;
 			double Safe_Zone[4] = { 0, 0.5, -0.5, 0 };
 			double q_Feed[4];
 			double dq[4];
@@ -867,12 +881,12 @@ inline void Control_Function() {
 	int ds = BaseENC[0] - BaseENC[1]; //find delta s
 	BaseENC[1] = BaseENC[0];
 	//Unwrapping position
-	if (ds >= 1024) {
-		ds -= 2047;
-	} else if (ds <= -1024) {
-		ds += 2047;
+	if (ds >= 1000) {
+		ds -= 1999;
+	} else if (ds <= -1000) {
+		ds += 1999;
 	}
-	Chess_Board_Base_Encoder += (ds/2048.0f)*2.0f*PI;
+	Chess_Board_Base_Encoder += (ds/2000.0f)*2.0f*PI;
 
 	/***** Joint Space SetPoint Gen *****/
 	if (Chessmove_State == 0) {
@@ -976,10 +990,11 @@ inline void LMoveTaskSpace(double Task2Go[3], double Time2Move){
 	Chessmove_State = 1; // Change to TaskSpace Traj
 }
 
-inline void ChessNotMovePathWay(uint8_t Index2Move, double Z_Offset, uint8_t IsJMove) {
+void ChessNotMovePathWay(uint8_t Index2Move, double Z_Offset, uint8_t IsJMove, uint8_t IsRemove) {
 	/***** Encoder Read *****/
 	double PositionXY[2];
-	double SafePose[3] = {210, -270, 250};
+	double SafePose[3] = {120, -370, 30};
+	static uint8_t PositionX = 0;
 
 	/***** Base Encoder Read *****/
 //	BaseEnc = BaseENCRead();   //?????????????????????????????????????????????????????????
@@ -992,22 +1007,37 @@ inline void ChessNotMovePathWay(uint8_t Index2Move, double Z_Offset, uint8_t IsJ
 	q_Feed[3] = Control[3].PositionFeedback;
 	FPK(q_Feed, 269.0f, Pne);
 	double Time2MoveDynamic = 1.2;
-	Time2MoveDynamic += (sqrt(
-			((PositionXY[0] - Pne[0]) * (PositionXY[0] - Pne[0]))
-					+ ((PositionXY[1] - Pne[1]) * (PositionXY[1] - Pne[1])))) * 0.01;
+	2
 
 	double TaskSpace2Go[3];
-	if (Index2Move == 64){
-		TaskSpace2Go[0] = SafePose[0];
-		TaskSpace2Go[1] = SafePose[1];
-		TaskSpace2Go[2] = SafePose[2];
+	if (Index2Move == 64) {
+		if (IsRemove == 1) {
+			TaskSpace2Go[0] = SafePose[0];
+			TaskSpace2Go[1] = SafePose[1];
+			TaskSpace2Go[2] = Z_TopOffset;
+			if (IsJMove) {
+				JMoveTaskSpace(TaskSpace2Go, Time2MoveDynamic);
+			} else {
+				JMoveTaskSpace(TaskSpace2Go, 1);
+			}
+		}
+		if (IsRemove == 2) {
+			TaskSpace2Go[0] = SafePose[0] + (PositionX * 30);
+			TaskSpace2Go[1] = SafePose[1];
+			TaskSpace2Go[2] = SafePose[1];
+			PositionX += 1;
+			if (IsJMove) {
+				JMoveTaskSpace(TaskSpace2Go, 4.5);
+			} else {
+				LMoveTaskSpace(TaskSpace2Go, 4.5);
+			}
+		}
 		if (IsJMove) {
 			JMoveTaskSpace(TaskSpace2Go, Time2MoveDynamic);
 		} else {
 			JMoveTaskSpace(TaskSpace2Go, 1);
 		}
-	}
-	else {
+	} else {
 		float Z_Board_Offset;
 		if (PositionXY[0] > 250 && PositionXY[0] < 450) {
 			Z_Board_Offset = (PositionXY[0] - 250) * 0.05f;
@@ -1035,26 +1065,29 @@ void ChessMoveStateMachine() {
 
 	switch (ChessMoveStates) {
 	case Chess_idle:
+		HAL_GPIO_WritePin(LED4_GPIO_Port, LED4_Pin, 0);
 		if (Chess_Move_Start_Flag) {
 			ChessMoveStates = Move_2_Start_Top_Point;
+			HAL_GPIO_WritePin(LED4_GPIO_Port, LED4_Pin, 1);
 			ChangeState = 1;
-		}
+			}
 		break;
 	case Move_2_Start_Top_Point:
 		if (ChangeState) {
-			ChessNotMovePathWay(ChessIndex[0], Z_TopOffset, 1);
+			ChessNotMovePathWay(ChessIndex[0], Z_TopOffset, 1 , 0);
 			ChangeState = 0;
 		}
 		if (!Traj_Flag) {
 			if(All_Joint_Speed_Avg() <= Speed_Error){
 				ChessMoveStates = Move_2_Start_Grip_Point;
+				Servo_Drive(&Servo[1], 90.0f + Control[0].PositionFeedback - Chess_Board_Base_Encoder);
 				ChangeState = 1;
 			}
 		}
 		break;
 	case Move_2_Start_Grip_Point:
 		if (ChangeState) {
-			ChessNotMovePathWay(ChessIndex[0], Z_2GripOffset, 0);
+			ChessNotMovePathWay(ChessIndex[0], Z_2GripOffset, 0, 1);
 			ChangeState = 0;
 		}
 		if (!Traj_Flag) {
@@ -1067,13 +1100,12 @@ void ChessMoveStateMachine() {
 		break;
 	case Move_2_Start_Point_and_Griping:
 		// Grip Chess
-		Servo_Drive(&Servo[0], 0); //Grip
-
+		Servo_Drive(&Servo[0], 25); //Grip
 		ChessMoveStates = Back_2_Start_Top_Point;
 		break;
 	case Back_2_Start_Top_Point:
 		if (ChangeState) {
-			ChessNotMovePathWay(ChessIndex[0], Z_TopOffset, 0);
+			ChessNotMovePathWay(ChessIndex[0], Z_TopOffset, 0, 1);
 			ChangeState = 0;
 		}
 		if (!Traj_Flag) {
@@ -1088,11 +1120,14 @@ void ChessMoveStateMachine() {
 
 	case Move_2_End_Top_Point:
 		if (ChangeState) {
-			ChessNotMovePathWay(ChessIndex[1], Z_TopOffset, 1);
+			ChessNotMovePathWay(ChessIndex[1], Z_TopOffset, 1, 1);
 			ChangeState = 0;
 		}
 		if (!Traj_Flag) {
 			if (All_Joint_Speed_Avg() <= Speed_Error) {
+				Servo_Drive(&Servo[1],
+						90.0f - Control[0].PositionFeedback
+								+ Chess_Board_Base_Encoder);
 				ChessMoveStates = Move_2_End_Ungrip_Point;
 				ChangeState = 1;
 			}
@@ -1100,24 +1135,42 @@ void ChessMoveStateMachine() {
 		break;
 	case Move_2_End_Ungrip_Point:
 		if (ChangeState) {
-			ChessNotMovePathWay(ChessIndex[1], Z_2GripOffset, 0);
+			ChessNotMovePathWay(ChessIndex[1], Z_2GripOffset, 0, 1);
+			ChangeState = 0;
+		}
+		if (!Traj_Flag) {
+			if (All_Joint_Speed_Avg() <= Speed_Error) {
+				if (ChessIndex[1] == 64) {
+					ChessMoveStates = Move_2_End_Remove_Point_and_Ungriping;
+					ChangeState = 1;
+				} else {
+					ChessMoveStates = Move_2_End_Point_and_Ungriping;
+					ChangeState = 1;
+				}
+			}
+		}
+		break;
+	case Move_2_End_Remove_Point_and_Ungriping:
+		if (ChangeState) {
+			ChessNotMovePathWay(ChessIndex[1], Z_2GripOffset, 0, 2);
 			ChangeState = 0;
 		}
 		if (!Traj_Flag) {
 			if (All_Joint_Speed_Avg() <= Speed_Error) {
 				ChessMoveStates = Move_2_End_Point_and_Ungriping;
+				Servo_Drive(&Servo[1], 90.0f + Control[0].PositionFeedback - Chess_Board_Base_Encoder);
 				ChangeState = 1;
 			}
 		}
 		break;
 	case Move_2_End_Point_and_Ungriping:
-		// Grip Chess
 		Servo_Drive(&Servo[0], 110); //Ungrip
 		ChessMoveStates = Back_2_End_Top_Point;
+		ChangeState = 1;
 		break;
 	case Back_2_End_Top_Point:
 		if (ChangeState) {
-			ChessNotMovePathWay(ChessIndex[1], Z_TopOffset, 0);
+			ChessNotMovePathWay(ChessIndex[1], Z_TopOffset, 0, 1);
 			ChangeState = 0;
 		}
 		if (!Traj_Flag) {
@@ -1128,20 +1181,30 @@ void ChessMoveStateMachine() {
 		}
 		break;
 	case ChessMove_Finish:
-		q_Feed[0] = Control[0].PositionFeedback;
-		q_Feed[1] = Control[1].PositionFeedback;
-		q_Feed[2] = Control[2].PositionFeedback;
-		q_Feed[3] = Control[3].PositionFeedback;
-		FPK(q_Feed, 269.0f, Pne);
-		Time2MoveDynamic += (sqrt(
-				((SafePose[0] - Pne[0]) * (SafePose[0] - Pne[0]))
-						+ ((SafePose[1] - Pne[1]) * (SafePose[1] - Pne[1]))
-						+ ((SafePose[2] - Pne[2]) * (SafePose[2] - Pne[2]))))
-				* 0.0075;
-
-		JMoveTaskSpace(SafePose, Time2MoveDynamic);
-		Chess_Move_Start_Flag = 0;
-		ChessMoveStates = Chess_idle;
+		if (ChangeState) {
+			q_Feed[0] = Control[0].PositionFeedback;
+			q_Feed[1] = Control[1].PositionFeedback;
+			q_Feed[2] = Control[2].PositionFeedback;
+			q_Feed[3] = Control[3].PositionFeedback;
+			FPK(q_Feed, 269.0f, Pne);
+			Time2MoveDynamic +=
+					(sqrt(
+							((SafePose[0] - Pne[0]) * (SafePose[0] - Pne[0]))
+									+ ((SafePose[1] - Pne[1])
+											* (SafePose[1] - Pne[1]))
+									+ ((SafePose[2] - Pne[2])
+											* (SafePose[2] - Pne[2]))))
+							* 0.0075;
+			JMoveTaskSpace(SafePose, Time2MoveDynamic);
+			ChangeState = 0;
+		}
+		if (!Traj_Flag) {
+			if (All_Joint_Speed_Avg() <= Speed_Error) {
+				ChessMoveStates = Chess_idle;
+				Chess_Move_Start_Flag = 0;
+				ChangeState = 1;
+			}
+		}
 		break;
 	default:
 		break;
@@ -1156,153 +1219,6 @@ double All_Joint_Speed_Avg(){
 	return Buf/4.0f;
 }
 
-//void Chess_Tracker(uint8_t Chess_Index, double Chess_Theta, double Chess_Omega){
-//	/*
-//	 * Offset2Center = robot to chess board center
-//	 */
-//	double Offset2Center[2] = {300,0};
-//	/*
-//	 * Output
-//	 *
-//	 */
-//	double ChessPosition[2];
-//	double ChessVelocity[2];
-//
-//	double ChessRadius;
-//	double TzOnly = 3;
-//    uint8_t X = Chess_Index%8;
-//    uint8_t N = Chess_Index/8;
-//
-//    ChessPose(X, N, Chess_Theta, ChessPosition);
-//    FindR(Offset2Center, ChessPosition, &ChessRadius);
-//    FindXYSpeed(Chess_Theta, Chess_Omega, ChessRadius, ChessVelocity);
-//
-//    /*
-//	 * Traj Z Axis
-//	 */
-//    for (int i = 0; i < 4; i++) {
-//    		q_in[i] = Control[i].PositionFeedback;
-//    	}
-//    FPK(q_in, 269.0f, EndEffectorNow);
-//	Traj_Coeff_Cal(&Traj[4], TzOnly, Z_Top_Offset,
-//			      EndEffectorNow, 0, 0); /* Cal C for Trajz*/
-//	Trajz_Flag = 1;
-//	if (Chessmove_State == 1 && Trajz_Flag == 1) { /* Let do while in check position state and have Cal Coeff Z*/
-//		double traj_t_set[5];
-//		double TaskZ_Position = 0;
-//		double TaskZ_Velocity = 0;
-//		traj_t_set[0] = t;
-//		traj_t_set[1] = t * t;
-//		traj_t_set[2] = traj_t_set[1] * t;
-//		traj_t_set[3] = traj_t_set[2] * t;
-//		traj_t_set[4] = traj_t_set[3] * t;
-//		TrajFollow(&Traj[4], traj_t_set, TaskZ_Position,
-//				   TaskZ_Velocity);
-//	}
-//	if (t >= Traj[4].T) { /* Trajz finished */
-//		Trajz_Flag = 0;
-//	}
-//	t += 0.005;
-//
-//    // Transfer to Joint
-//	double EndEffectorgoal[3];
-//	EndEffectorgoal[0] = ChessPosition[0];
-//	EndEffectorgoal[1] = ChessPosition[1];
-//	EndEffectorgoal[2] = TaskZ_Position;
-//	double gamma[3] = { 1, 1, -1 };
-//	IPK(gamma, EndEffectorgoal, SetPoint_Position);
-//	d_Task[0] = ChessVelocity[0];
-//	d_Task[1] = ChessVelocity[1];
-//	d_Task[2] = TaskZ_Velocity;
-//	IVK(SetPoint_Position, d_Task, SetPoint_Velocity);
-//
-//}
-
-//void ChessMove1(uint8_t StartIndex, uint8_t EndIndex){
-//	double Z_Top_Offset = 200;
-//
-//	double EndEffectorNow[3];
-//	double EndEffectorAtChess[2];
-//	double q_in[5];
-//
-//	for (int i = 0; i < 4; i++) {
-//		q_in[i] = Control[i].PositionFeedback;
-//	}
-//	ChessPose(StartIndex, Kalman[4].x1, EndEffectorAtChess);
-//	FPK(q_in, 269.0f, EndEffectorNow);
-//	double DeltaX = EndEffectorNow[0] - EndEffectorAtChess[0];
-//	double DeltaY = EndEffectorNow[1] - EndEffectorAtChess[1];
-//	double DeltaZ = EndEffectorNow[2] - Z_Top_Offset;
-//	double Distance = sqrt(
-//			(DeltaX * DeltaX) + (DeltaY * DeltaY) + (DeltaZ * DeltaZ));
-//	double T2Move = (Distance / 150.0f) + 1;
-//
-////	/*
-////	 * Traj Z Axis
-////	 */
-////
-////	Traj_Coeff_Cal(&Traj[4], T2Move, Z_Top_Offset,
-////			EndEffectorNow, 0, 0); /* Cal C for Trajz*/
-////	Trajz_Flag = 1;
-////	if (Chessmove_State == 1 && Trajz_Flag == 1) { /* Let do while in check position state and have Cal Coeff Z*/
-////		double traj_t_set[5];
-////		traj_t_set[0] = t;
-////		traj_t_set[1] = t * t;
-////		traj_t_set[2] = traj_t_set[1] * t;
-////		traj_t_set[3] = traj_t_set[2] * t;
-////		traj_t_set[4] = traj_t_set[3] * t;
-////		TrajFollow(&Traj[4], traj_t_set, &SetPoint_Position[4], /* SetPoint_Position[4] valueof z axis not related to control */
-////								&SetPoint_Velocity[4]);
-////	}
-////	if (t >= Traj[4].T) { /* Trajz finished */
-////		Trajz_Flag = 0;
-////	}
-////	t += 0.005;
-//
-//	/*
-//	 * Traj 2 Move XY
-//	 */
-//
-//	double EndEffectorTarget[3];
-//	EndEffectorTarget[2] = Z_Top_Offset;
-//	ChessPose(StartIndex, Kalman[4].x1 + (T2Move * (Kalman[4].x2)) , EndEffectorTarget);
-//
-//	double gamma[3] = { 1, 1, -1 };
-//	double q_inv[4];
-//	IPK(gamma, EndEffectorTarget, q_inv);
-//	t = 0;
-//	for (int i = 0; i < 4; i++) {
-//		Traj_Coeff_Cal(&Traj[i], T2Move, q_inv[i],
-//				Control[i].PositionFeedback, 0, Control[i].VelocityFeedback);
-//	}
-//	Traj_Flag = 0x0F;
-//	Chessmove_State = 0;
-//
-//}
-//
-//uint8_t ChessMove2() {
-//	double EndEffectorNow[3];
-//	double q_now[5];
-//	for (int i = 0; i < 4; i++) {
-//		q_now[i] = Control[i].PositionFeedback;
-//	}
-//	FPK(q_now, 269.0f, EndEffectorNow);
-//	uint8_t count_ready = 0;
-//	for (int i = 0; i < 4; i++) {
-//		if (fabs(EndEffectorNow[i] - EndEffectorTarget[i]) <= 0.01) {
-//			count_ready += 1;
-//		}
-//		if (count_ready == 3) {  	// Finish Task
-//			return 1;
-//		} else {						// Move Not Finish
-//			return 0;
-//		}
-//	}
-//	return 0;
-//}
-
-
-
 /* USER CODE END 4 */
 
 /**
@@ -1314,6 +1230,7 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
+  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, 0);
   while (1)
   {
   }

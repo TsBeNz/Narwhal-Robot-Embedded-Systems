@@ -232,3 +232,150 @@ void CascadeControl(ControlParameter *Control, KalmanParameter *kalman,
 			+ Control->VelocityPIDOutput;
 //	Control->Output = Control->VelocityPIDOutput;
 }
+
+
+
+//void Chess_Tracker(uint8_t Chess_Index, double Chess_Theta, double Chess_Omega){
+//	/*
+//	 * Offset2Center = robot to chess board center
+//	 */
+//	double Offset2Center[2] = {300,0};
+//	/*
+//	 * Output
+//	 *
+//	 */
+//	double ChessPosition[2];
+//	double ChessVelocity[2];
+//
+//	double ChessRadius;
+//	double TzOnly = 3;
+//    uint8_t X = Chess_Index%8;
+//    uint8_t N = Chess_Index/8;
+//
+//    ChessPose(X, N, Chess_Theta, ChessPosition);
+//    FindR(Offset2Center, ChessPosition, &ChessRadius);
+//    FindXYSpeed(Chess_Theta, Chess_Omega, ChessRadius, ChessVelocity);
+//
+//    /*
+//	 * Traj Z Axis
+//	 */
+//    for (int i = 0; i < 4; i++) {
+//    		q_in[i] = Control[i].PositionFeedback;
+//    	}
+//    FPK(q_in, 269.0f, EndEffectorNow);
+//	Traj_Coeff_Cal(&Traj[4], TzOnly, Z_Top_Offset,
+//			      EndEffectorNow, 0, 0); /* Cal C for Trajz*/
+//	Trajz_Flag = 1;
+//	if (Chessmove_State == 1 && Trajz_Flag == 1) { /* Let do while in check position state and have Cal Coeff Z*/
+//		double traj_t_set[5];
+//		double TaskZ_Position = 0;
+//		double TaskZ_Velocity = 0;
+//		traj_t_set[0] = t;
+//		traj_t_set[1] = t * t;
+//		traj_t_set[2] = traj_t_set[1] * t;
+//		traj_t_set[3] = traj_t_set[2] * t;
+//		traj_t_set[4] = traj_t_set[3] * t;
+//		TrajFollow(&Traj[4], traj_t_set, TaskZ_Position,
+//				   TaskZ_Velocity);
+//	}
+//	if (t >= Traj[4].T) { /* Trajz finished */
+//		Trajz_Flag = 0;
+//	}
+//	t += 0.005;
+//
+//    // Transfer to Joint
+//	double EndEffectorgoal[3];
+//	EndEffectorgoal[0] = ChessPosition[0];
+//	EndEffectorgoal[1] = ChessPosition[1];
+//	EndEffectorgoal[2] = TaskZ_Position;
+//	double gamma[3] = { 1, 1, -1 };
+//	IPK(gamma, EndEffectorgoal, SetPoint_Position);
+//	d_Task[0] = ChessVelocity[0];
+//	d_Task[1] = ChessVelocity[1];
+//	d_Task[2] = TaskZ_Velocity;
+//	IVK(SetPoint_Position, d_Task, SetPoint_Velocity);
+//
+//}
+
+//void ChessMove1(uint8_t StartIndex, uint8_t EndIndex){
+//	double Z_Top_Offset = 200;
+//
+//	double EndEffectorNow[3];
+//	double EndEffectorAtChess[2];
+//	double q_in[5];
+//
+//	for (int i = 0; i < 4; i++) {
+//		q_in[i] = Control[i].PositionFeedback;
+//	}
+//	ChessPose(StartIndex, Kalman[4].x1, EndEffectorAtChess);
+//	FPK(q_in, 269.0f, EndEffectorNow);
+//	double DeltaX = EndEffectorNow[0] - EndEffectorAtChess[0];
+//	double DeltaY = EndEffectorNow[1] - EndEffectorAtChess[1];
+//	double DeltaZ = EndEffectorNow[2] - Z_Top_Offset;
+//	double Distance = sqrt(
+//			(DeltaX * DeltaX) + (DeltaY * DeltaY) + (DeltaZ * DeltaZ));
+//	double T2Move = (Distance / 150.0f) + 1;
+//
+////	/*
+////	 * Traj Z Axis
+////	 */
+////
+////	Traj_Coeff_Cal(&Traj[4], T2Move, Z_Top_Offset,
+////			EndEffectorNow, 0, 0); /* Cal C for Trajz*/
+////	Trajz_Flag = 1;
+////	if (Chessmove_State == 1 && Trajz_Flag == 1) { /* Let do while in check position state and have Cal Coeff Z*/
+////		double traj_t_set[5];
+////		traj_t_set[0] = t;
+////		traj_t_set[1] = t * t;
+////		traj_t_set[2] = traj_t_set[1] * t;
+////		traj_t_set[3] = traj_t_set[2] * t;
+////		traj_t_set[4] = traj_t_set[3] * t;
+////		TrajFollow(&Traj[4], traj_t_set, &SetPoint_Position[4], /* SetPoint_Position[4] valueof z axis not related to control */
+////								&SetPoint_Velocity[4]);
+////	}
+////	if (t >= Traj[4].T) { /* Trajz finished */
+////		Trajz_Flag = 0;
+////	}
+////	t += 0.005;
+//
+//	/*
+//	 * Traj 2 Move XY
+//	 */
+//
+//	double EndEffectorTarget[3];
+//	EndEffectorTarget[2] = Z_Top_Offset;
+//	ChessPose(StartIndex, Kalman[4].x1 + (T2Move * (Kalman[4].x2)) , EndEffectorTarget);
+//
+//	double gamma[3] = { 1, 1, -1 };
+//	double q_inv[4];
+//	IPK(gamma, EndEffectorTarget, q_inv);
+//	t = 0;
+//	for (int i = 0; i < 4; i++) {
+//		Traj_Coeff_Cal(&Traj[i], T2Move, q_inv[i],
+//				Control[i].PositionFeedback, 0, Control[i].VelocityFeedback);
+//	}
+//	Traj_Flag = 0x0F;
+//	Chessmove_State = 0;
+//
+//}
+//
+//uint8_t ChessMove2() {
+//	double EndEffectorNow[3];
+//	double q_now[5];
+//	for (int i = 0; i < 4; i++) {
+//		q_now[i] = Control[i].PositionFeedback;
+//	}
+//	FPK(q_now, 269.0f, EndEffectorNow);
+//	uint8_t count_ready = 0;
+//	for (int i = 0; i < 4; i++) {
+//		if (fabs(EndEffectorNow[i] - EndEffectorTarget[i]) <= 0.01) {
+//			count_ready += 1;
+//		}
+//		if (count_ready == 3) {  	// Finish Task
+//			return 1;
+//		} else {						// Move Not Finish
+//			return 0;
+//		}
+//	}
+//	return 0;
+//}
