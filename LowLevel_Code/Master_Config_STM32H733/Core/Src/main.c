@@ -53,7 +53,7 @@
 
 
 double Z_TopOffset = 180;
-double Z_2GripOffset = 20;
+double Z_2GripOffset = 45;
 
 double Task2ShowinMonitor[3];
 uint8_t Servo_Griper[2];
@@ -113,6 +113,7 @@ uint8_t ChessIndex[2];
 float ChessHight;
 uint8_t Chess_Move_Start_Flag = 0;
 ChessMoveState ChessMoveStates = Chess_idle;
+uint8_t PositionX_Remove = 0;
 
 double tune_PID[2] = {0,0};
 double T_tune_PID = 2;
@@ -133,7 +134,6 @@ double v2freqGain;
 uint8_t Buffer_TPM75[2];
 
 // Debug Variable //
-
 
 
 uint8_t Test_traj = 0;
@@ -277,10 +277,6 @@ int main(void)
 	Kalman_init(&Kalman[5], 5000, 0.001);
 
 	/*			CascadeControl			*/
-//	CascadeControl_init(&Control[0], 0.6, 0, 0, 15, 0.5, 10, 400);
-//	CascadeControl_init(&Control[1], 0.7, 0, 0.3, 10, 0, 10, 410);
-//	CascadeControl_init(&Control[2], 0.82, 0, 0.2, 10, 0, 30, 400);
-//	CascadeControl_init(&Control[3], 0.7, 0.001, 0, 9, 0.1, 3, 500);
 	CascadeControl_init(&Control[0], 0.75, 0, 0, 15, 0.5, 10, 400);
 	CascadeControl_init(&Control[1], 0.5, 0, 0.5, 10, 0, 30, 410);
 	CascadeControl_init(&Control[2], 0.5, 0, 0.3, 25, 0, 30, 800);
@@ -328,7 +324,6 @@ int main(void)
 
 	HAL_TIM_Base_Start_IT(&htim23);   // Start Control Timer
 	HAL_UART_Receive_IT(&huart5, UART5_rxBuffer, 14);
-
 	ChessMoveStates = Chess_idle;
 
   /* USER CODE END 2 */
@@ -716,6 +711,7 @@ inline void Narwhal_Protocol() {
 
 				if (ChessIndex[0] == 65 || ChessIndex[1] == 65){
 					ChessMoveStates = ChessMove_Finish;
+					PositionX_Remove = 0;
 				}
 
 				Chess_Move_Start_Flag = 1;
@@ -990,11 +986,11 @@ inline void LMoveTaskSpace(double Task2Go[3], double Time2Move){
 	Chessmove_State = 1; // Change to TaskSpace Traj
 }
 
-void ChessNotMovePathWay(uint8_t Index2Move, double Z_Offset, uint8_t IsJMove, uint8_t IsRemove) {
+void ChessNotMovePathWay(uint8_t Index2Move, double Z_Offset, uint8_t IsJMove,
+		uint8_t IsRemove) {
 	/***** Encoder Read *****/
 	double PositionXY[2];
-	double SafePose[3] = {120, -370, 30};
-	static uint8_t PositionX = 0;
+	double SafePose[3] = { 100, -370, 13 };
 
 	/***** Base Encoder Read *****/
 //	BaseEnc = BaseENCRead();   //?????????????????????????????????????????????????????????
@@ -1007,36 +1003,45 @@ void ChessNotMovePathWay(uint8_t Index2Move, double Z_Offset, uint8_t IsJMove, u
 	q_Feed[3] = Control[3].PositionFeedback;
 	FPK(q_Feed, 269.0f, Pne);
 	double Time2MoveDynamic = 1.2;
-	2
 
 	double TaskSpace2Go[3];
 	if (Index2Move == 64) {
 		if (IsRemove == 1) {
-			TaskSpace2Go[0] = SafePose[0];
+			TaskSpace2Go[0] = SafePose[0] + (PositionX_Remove * 40);
 			TaskSpace2Go[1] = SafePose[1];
 			TaskSpace2Go[2] = Z_TopOffset;
+			Time2MoveDynamic += (sqrt(
+								((TaskSpace2Go[0] - Pne[0]) * (TaskSpace2Go[0] - Pne[0]))
+										+ ((TaskSpace2Go[1] - Pne[1]) * (TaskSpace2Go[1] - Pne[1])
+												+ ((TaskSpace2Go[2] - Pne[2]) * (TaskSpace2Go[2] - Pne[2])))))
+								* 0.0067;
 			if (IsJMove) {
 				JMoveTaskSpace(TaskSpace2Go, Time2MoveDynamic);
 			} else {
-				JMoveTaskSpace(TaskSpace2Go, 1);
+				JMoveTaskSpace(TaskSpace2Go, 2);
 			}
-		}
-		if (IsRemove == 2) {
-			TaskSpace2Go[0] = SafePose[0] + (PositionX * 30);
+		} else if (IsRemove == 2) {
+			TaskSpace2Go[0] = SafePose[0] + (PositionX_Remove * 40);
 			TaskSpace2Go[1] = SafePose[1];
-			TaskSpace2Go[2] = SafePose[1];
-			PositionX += 1;
+			TaskSpace2Go[2] = SafePose[2];
+			PositionX_Remove += 1;
+
+			Time2MoveDynamic += (sqrt(
+					((TaskSpace2Go[0] - Pne[0]) * (TaskSpace2Go[0] - Pne[0]))
+							+ ((TaskSpace2Go[1] - Pne[1]) * (TaskSpace2Go[1] - Pne[1])
+									+ ((TaskSpace2Go[2] - Pne[2]) * (TaskSpace2Go[2] - Pne[2])))))
+					* 0.0067;
 			if (IsJMove) {
-				JMoveTaskSpace(TaskSpace2Go, 4.5);
+				JMoveTaskSpace(TaskSpace2Go, Time2MoveDynamic);
 			} else {
-				LMoveTaskSpace(TaskSpace2Go, 4.5);
+				JMoveTaskSpace(TaskSpace2Go, 2);
 			}
 		}
-		if (IsJMove) {
-			JMoveTaskSpace(TaskSpace2Go, Time2MoveDynamic);
-		} else {
-			JMoveTaskSpace(TaskSpace2Go, 1);
-		}
+//		if (IsJMove) {
+//			JMoveTaskSpace(TaskSpace2Go, Time2MoveDynamic);
+//		} else {
+//			JMoveTaskSpace(TaskSpace2Go, 2);
+//		}
 	} else {
 		float Z_Board_Offset;
 		if (PositionXY[0] > 250 && PositionXY[0] < 450) {
@@ -1047,6 +1052,13 @@ void ChessNotMovePathWay(uint8_t Index2Move, double Z_Offset, uint8_t IsJMove, u
 		TaskSpace2Go[0] = PositionXY[0];
 		TaskSpace2Go[1] = PositionXY[1];
 		TaskSpace2Go[2] = Z_Offset + ChessHight + Z_Board_Offset;
+
+		Time2MoveDynamic += (sqrt(
+							((TaskSpace2Go[0] - Pne[0]) * (TaskSpace2Go[0] - Pne[0]))
+									+ ((TaskSpace2Go[1] - Pne[1]) * (TaskSpace2Go[1] - Pne[1])
+											+ ((TaskSpace2Go[2] - Pne[2]) * (TaskSpace2Go[2] - Pne[2])))))
+							* 0.0067;
+
 		if (IsJMove) {
 			JMoveTaskSpace(TaskSpace2Go, Time2MoveDynamic);
 		} else {
@@ -1069,6 +1081,7 @@ void ChessMoveStateMachine() {
 		if (Chess_Move_Start_Flag) {
 			ChessMoveStates = Move_2_Start_Top_Point;
 			HAL_GPIO_WritePin(LED4_GPIO_Port, LED4_Pin, 1);
+			Servo_Drive(&Servo[1], 90);
 			ChangeState = 1;
 			}
 		break;
@@ -1126,8 +1139,7 @@ void ChessMoveStateMachine() {
 		if (!Traj_Flag) {
 			if (All_Joint_Speed_Avg() <= Speed_Error) {
 				Servo_Drive(&Servo[1],
-						90.0f - Control[0].PositionFeedback
-								+ Chess_Board_Base_Encoder);
+						90.0f - Control[0].PositionFeedback	+ Chess_Board_Base_Encoder);
 				ChessMoveStates = Move_2_End_Ungrip_Point;
 				ChangeState = 1;
 			}
@@ -1158,7 +1170,6 @@ void ChessMoveStateMachine() {
 		if (!Traj_Flag) {
 			if (All_Joint_Speed_Avg() <= Speed_Error) {
 				ChessMoveStates = Move_2_End_Point_and_Ungriping;
-				Servo_Drive(&Servo[1], 90.0f + Control[0].PositionFeedback - Chess_Board_Base_Encoder);
 				ChangeState = 1;
 			}
 		}

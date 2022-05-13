@@ -244,7 +244,7 @@ void ChessPose(uint8_t Chess_Index, double Chess_Theta, double ChessPosition[2])
 
 	double l = 250;
 	double L = 400;
-	double YOffset = 10;
+	double YOffset = 13;
 
 	double b_positionx_tmp;
 	double c_positionx_tmp;
