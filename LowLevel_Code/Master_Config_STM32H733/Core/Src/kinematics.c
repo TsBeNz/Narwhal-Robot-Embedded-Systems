@@ -242,9 +242,10 @@ void ChessPose(uint8_t Chess_Index, double Chess_Theta, double ChessPosition[2])
 	uint8_t X = (Chess_Index%8) + 1;
 	uint8_t N = (Chess_Index/8) + 1;
 
-	double l = 250;
-	double L = 400;
-	double YOffset = 13;
+	double l = 240;
+	double L = 405;
+	double XOffset = 25;
+	double YOffset = 8;
 
 	double b_positionx_tmp;
 	double c_positionx_tmp;
@@ -256,11 +257,14 @@ void ChessPose(uint8_t Chess_Index, double Chess_Theta, double ChessPosition[2])
 	c_positionx_tmp = 9.0 * L / 16.0;
 	d_positionx_tmp = X * L / 8.0 - c_positionx_tmp;
 	e_positionx_tmp = N * L / 8.0;
-	ChessPosition[0] = ((b_positionx_tmp * d_positionx_tmp
+	ChessPosition[0] = (((b_positionx_tmp * d_positionx_tmp
 			+ (e_positionx_tmp - c_positionx_tmp * positionx_tmp)) + l)
-			+ L / 2.0;
+			+ L / 2.0) + XOffset;
 	ChessPosition[1] = (-positionx_tmp * d_positionx_tmp
 			+ (e_positionx_tmp - c_positionx_tmp) * b_positionx_tmp) + YOffset;
+	if (ChessPosition[1] > 0){
+		ChessPosition[1] += 10;
+	}
 }
 
 void FindR(double Offset2Center[2], double ChessPosition[2],

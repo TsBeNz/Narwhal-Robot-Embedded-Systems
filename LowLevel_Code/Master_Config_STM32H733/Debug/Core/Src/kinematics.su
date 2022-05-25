@@ -2,6 +2,6 @@
 ../Core/Src/kinematics.c:62:26:IVK	176	static
 ../Core/Src/kinematics.c:132:6:FPK	120	static
 ../Core/Src/kinematics.c:193:6:FVK	128	static
-../Core/Src/kinematics.c:238:6:ChessPose	96	static
-../Core/Src/kinematics.c:266:6:FindR	40	static
-../Core/Src/kinematics.c:273:6:FindXYSpeed	56	static
+../Core/Src/kinematics.c:238:6:ChessPose	104	static
+../Core/Src/kinematics.c:270:6:FindR	40	static
+../Core/Src/kinematics.c:277:6:FindXYSpeed	56	static

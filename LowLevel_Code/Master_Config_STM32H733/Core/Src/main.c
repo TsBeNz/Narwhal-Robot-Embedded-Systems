@@ -53,7 +53,7 @@
 
 
 double Z_TopOffset = 180;
-double Z_2GripOffset = 45;
+double Z_2GripOffset = 50;
 
 double Task2ShowinMonitor[3];
 uint8_t Servo_Griper[2];
@@ -210,7 +210,7 @@ int main(void)
   PeriphCommonClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  MX_DMA_Init();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -241,8 +241,6 @@ int main(void)
   MX_ADC2_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-
-	MX_DMA_Init();
 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_6, 1);	// LVDS EN
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_6, 1);	// Level Shifter EN
 
@@ -320,7 +318,6 @@ int main(void)
 	Neopixel_Set(&Neopixel, 1, 0, 255, 0);
 	Neopixel_Set(&Neopixel, 2, 0, 0, 255);
 	Neopixel_Sent(&Neopixel);
-
 
 	HAL_TIM_Base_Start_IT(&htim23);   // Start Control Timer
 	HAL_UART_Receive_IT(&huart5, UART5_rxBuffer, 14);
@@ -1011,10 +1008,12 @@ void ChessNotMovePathWay(uint8_t Index2Move, double Z_Offset, uint8_t IsJMove,
 			TaskSpace2Go[1] = SafePose[1];
 			TaskSpace2Go[2] = Z_TopOffset;
 			Time2MoveDynamic += (sqrt(
-								((TaskSpace2Go[0] - Pne[0]) * (TaskSpace2Go[0] - Pne[0]))
-										+ ((TaskSpace2Go[1] - Pne[1]) * (TaskSpace2Go[1] - Pne[1])
-												+ ((TaskSpace2Go[2] - Pne[2]) * (TaskSpace2Go[2] - Pne[2])))))
-								* 0.0067;
+					((TaskSpace2Go[0] - Pne[0]) * (TaskSpace2Go[0] - Pne[0]))
+							+ ((TaskSpace2Go[1] - Pne[1])
+									* (TaskSpace2Go[1] - Pne[1])
+									+ ((TaskSpace2Go[2] - Pne[2])
+											* (TaskSpace2Go[2] - Pne[2])))))
+					* 0.0067;
 			if (IsJMove) {
 				JMoveTaskSpace(TaskSpace2Go, Time2MoveDynamic);
 			} else {
@@ -1028,8 +1027,10 @@ void ChessNotMovePathWay(uint8_t Index2Move, double Z_Offset, uint8_t IsJMove,
 
 			Time2MoveDynamic += (sqrt(
 					((TaskSpace2Go[0] - Pne[0]) * (TaskSpace2Go[0] - Pne[0]))
-							+ ((TaskSpace2Go[1] - Pne[1]) * (TaskSpace2Go[1] - Pne[1])
-									+ ((TaskSpace2Go[2] - Pne[2]) * (TaskSpace2Go[2] - Pne[2])))))
+							+ ((TaskSpace2Go[1] - Pne[1])
+									* (TaskSpace2Go[1] - Pne[1])
+									+ ((TaskSpace2Go[2] - Pne[2])
+											* (TaskSpace2Go[2] - Pne[2])))))
 					* 0.0067;
 			if (IsJMove) {
 				JMoveTaskSpace(TaskSpace2Go, Time2MoveDynamic);
@@ -1037,27 +1038,24 @@ void ChessNotMovePathWay(uint8_t Index2Move, double Z_Offset, uint8_t IsJMove,
 				JMoveTaskSpace(TaskSpace2Go, 2);
 			}
 		}
-//		if (IsJMove) {
-//			JMoveTaskSpace(TaskSpace2Go, Time2MoveDynamic);
-//		} else {
-//			JMoveTaskSpace(TaskSpace2Go, 2);
-//		}
 	} else {
 		float Z_Board_Offset;
 		if (PositionXY[0] > 250 && PositionXY[0] < 450) {
 			Z_Board_Offset = (PositionXY[0] - 250) * 0.05f;
 		} else if (PositionXY[0] > 450 && PositionXY[0] < 700) {
-			Z_Board_Offset = (PositionXY[0] - 450) * 0.1f;
+			Z_Board_Offset = (PositionXY[0] - 450) * 0.11f;
 		}
 		TaskSpace2Go[0] = PositionXY[0];
 		TaskSpace2Go[1] = PositionXY[1];
 		TaskSpace2Go[2] = Z_Offset + ChessHight + Z_Board_Offset;
 
 		Time2MoveDynamic += (sqrt(
-							((TaskSpace2Go[0] - Pne[0]) * (TaskSpace2Go[0] - Pne[0]))
-									+ ((TaskSpace2Go[1] - Pne[1]) * (TaskSpace2Go[1] - Pne[1])
-											+ ((TaskSpace2Go[2] - Pne[2]) * (TaskSpace2Go[2] - Pne[2])))))
-							* 0.0067;
+				((TaskSpace2Go[0] - Pne[0]) * (TaskSpace2Go[0] - Pne[0]))
+						+ ((TaskSpace2Go[1] - Pne[1])
+								* (TaskSpace2Go[1] - Pne[1])
+								+ ((TaskSpace2Go[2] - Pne[2])
+										* (TaskSpace2Go[2] - Pne[2])))))
+				* 0.0067;
 
 		if (IsJMove) {
 			JMoveTaskSpace(TaskSpace2Go, Time2MoveDynamic);
