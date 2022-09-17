@@ -63,7 +63,7 @@
       36
     ],
     "visible_layers": "7fcd0fc_80000007",
-    "zone_display_mode": 0
+    "zone_display_mode": 1
   },
   "meta": {
     "filename": "NarWhelEncoderV2.kicad_prl",
